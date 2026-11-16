@@ -1,0 +1,1226 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101827">
+<meta name="description" content="RK AI Mobile Business Assistant">
+
+<link rel="manifest" href="./manifest.json">
+
+
+<title>RK AI Mobile Assistant</title>
+
+<style>
+/* =========================================
+   RK AI MOBILE ASSISTANT
+   SINGLE FILE: HTML + CSS + JAVASCRIPT
+========================================= */
+
+:root {
+    --bg: #101827;
+    --panel: #172235;
+    --panel2: #202e43;
+    --border: #293950;
+    --text: #edf3fb;
+    --muted: #94a3b8;
+    --primary: #5688f5;
+    --primary-hover: #3972ed;
+    --success: #22c58b;
+    --danger: #f87171;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    height: 100dvh;
+}
+
+button, textarea {
+    font-family: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+.app {
+    max-width: 950px;
+    height: 100%;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+}
+
+/* HEADER */
+
+.header {
+    min-height: 76px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo {
+    width: 46px;
+    height: 46px;
+    background: var(--primary);
+    border-radius: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 19px;
+    font-weight: 800;
+    color: white;
+}
+
+.brand h1 {
+    font-size: 17px;
+    font-weight: 650;
+}
+
+.connection {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+    background: var(--danger);
+}
+
+.dot.online {
+    background: var(--success);
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.icon-button {
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--panel2);
+    color: var(--text);
+    font-size: 19px;
+}
+
+/* CHAT AREA */
+
+.chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 18px;
+    scroll-behavior: smooth;
+}
+
+.welcome {
+    max-width: 520px;
+    margin: 50px auto 30px;
+    text-align: center;
+}
+
+.welcome-logo {
+    width: 70px;
+    height: 70px;
+    border-radius: 20px;
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto auto 20px;
+    font-size: 25px;
+    font-weight: 800;
+}
+
+.welcome h2 {
+    font-size: 24px;
+    margin-bottom: 12px;
+}
+
+.welcome p {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.suggestions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.suggestion {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 10px;
+    color: var(--text);
+    font-size: 13px;
+    text-align: left;
+}
+
+.suggestion:hover {
+    border-color: var(--primary);
+    background: var(--panel2);
+}
+
+/* MESSAGES */
+
+.message-row {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+.message-row.user {
+    justify-content: flex-end;
+}
+
+.message-row.assistant {
+    justify-content: flex-start;
+}
+
+.message-bubble {
+    max-width: 85%;
+    padding: 14px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.user .message-bubble {
+    background: var(--primary);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.assistant .message-bubble {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+}
+
+.message-time {
+    display: block;
+    margin-top: 7px;
+    font-size: 10px;
+    opacity: 0.65;
+    text-align: right;
+}
+
+.message-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 5px;
+}
+
+.typing {
+    color: var(--muted);
+    font-size: 13px;
+    padding: 12px;
+}
+
+/* INPUT */
+
+.input-section {
+    padding: 14px 16px 10px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+}
+
+.input-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 9px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 8px;
+}
+
+.input-container textarea {
+    flex: 1;
+    min-width: 0;
+    max-height: 130px;
+    resize: none;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    padding: 10px 7px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.input-container textarea::placeholder {
+    color: var(--muted);
+}
+
+.send-button,
+.mic-button {
+    width: 43px;
+    height: 43px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 12px;
+    font-size: 19px;
+}
+
+.send-button {
+    background: var(--primary);
+    color: white;
+}
+
+.send-button:hover {
+    background: var(--primary-hover);
+}
+
+.mic-button {
+    background: transparent;
+    color: var(--text);
+}
+
+.mic-button.recording {
+    background: var(--danger);
+    color: white;
+    animation: pulse 1s infinite;
+}
+
+button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+@keyframes pulse {
+    50% { opacity: 0.55; }
+}
+
+.input-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+/* NOTIFICATION */
+
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 95px;
+    transform: translateX(-50%);
+    background: #26374e;
+    color: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 16px;
+    font-size: 13px;
+    display: none;
+    z-index: 10;
+    max-width: 90%;
+    text-align: center;
+}
+
+.toast.show {
+    display: block;
+}
+
+/* MOBILE */
+
+@media (max-width: 600px) {
+
+    .header {
+        min-height: 68px;
+        padding: 10px 13px;
+    }
+
+    .brand h1 {
+        font-size: 15px;
+    }
+
+    .chat-area {
+        padding: 18px 12px;
+    }
+
+    .welcome {
+        margin-top: 35px;
+    }
+
+    .welcome h2 {
+        font-size: 21px;
+    }
+
+    .suggestions {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .suggestion {
+        font-size: 12px;
+        padding: 12px 9px;
+    }
+
+    .message-bubble {
+        max-width: 90%;
+        font-size: 14px;
+    }
+
+    .input-section {
+        padding: 10px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- HEADER -->
+    <header class="header">
+
+        <div class="brand">
+
+            <div class="logo">RK</div>
+
+            <div>
+                <h1>RK AI Assistant</h1>
+
+                <div class="connection" id="connectionStatus">
+                    <span class="dot"></span>
+                    Backend not connected
+                </div>
+            </div>
+
+        </div>
+
+        <div class="header-actions">
+
+            <button class="icon-button"
+                    id="clearButton"
+                    title="Clear chat">
+                ↻
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- CHAT -->
+    <main class="chat-area" id="chatArea">
+
+        <section class="welcome" id="welcome">
+
+            <div class="welcome-logo">RK</div>
+
+            <h2>Welcome to RK AI</h2>
+
+            <p>
+                Your mobile business assistant.
+
+                Ask questions about sales, purchases,
+                inventory, suppliers and customers.
+            </p>
+
+            <div class="suggestions">
+
+                <button class="suggestion"
+                    data-message="Check my today's total sales">
+                    Today's total sales
+                </button>
+
+                <button class="suggestion"
+                    data-message="Show my current stock summary">
+                    Current stock summary
+                </button>
+
+                <button class="suggestion"
+                    data-message="Show my top selling products">
+                    Top selling products
+                </button>
+
+                <button class="suggestion"
+                    data-message="Show my purchase summary">
+                    Purchase summary
+                </button>
+
+            </div>
+
+        </section>
+
+        <div id="messages"></div>
+
+        <div id="typingIndicator"
+             class="typing"
+             hidden>
+            RK AI is processing...
+        </div>
+
+    </main>
+
+
+    <!-- MESSAGE INPUT -->
+    <footer class="input-section">
+
+        <div class="input-container">
+
+            <textarea
+                id="messageInput"
+                placeholder="Ask your business assistant..."
+                rows="1"
+                maxlength="4000">
+            </textarea>
+
+            <button class="mic-button"
+                    id="micButton"
+                    title="Voice input">
+                🎤
+            </button>
+
+            <button class="send-button"
+                    id="sendButton"
+                    title="Send message">
+                ➤
+            </button>
+
+        </div>
+
+        <div class="input-footer">
+
+            <span id="inputStatus">
+                Text and voice supported
+            </span>
+
+            <span>RK Developer Studio</span>
+
+        </div>
+
+    </footer>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+
+<script>
+/* =========================================
+   RK AI MOBILE ASSISTANT
+   JAVASCRIPT
+========================================= */
+
+/*
+    BACKEND CONFIGURATION
+
+    Leave empty while testing the interface.
+
+    Later, we will add your Cloudflare Worker
+    WebSocket URL here.
+
+    Example format:
+    wss://your-worker.your-subdomain.workers.dev/ws
+
+    Never put SQL credentials or AI provider
+    API keys in this file.
+*/
+
+const CONFIG = {
+    // Replace this with your deployed Cloudflare Worker WebSocket URL.
+    // Example: "wss://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev/ws"
+   websocketUrl: "wss://rkai-mobile-assistant.rkdeveloperstudio.workers.dev/ws",
+
+    // DEVELOPMENT ONLY: paste the MOBILE_TOKEN value from cloudflare/.dev.vars.
+    // This is intentionally hardcoded for your private test. Anyone who can
+    // inspect this HTML/JavaScript can read the token. Never publish this file.
+    mobileToken: "1b45eb76dbb603fcf7977245a57699f065851f1e2c23506e5d46458d48a0631b",
+
+    demoMode: false
+};
+
+
+/* =========================================
+   ELEMENTS
+========================================= */
+
+const chatArea = document.getElementById("chatArea");
+const messages = document.getElementById("messages");
+const welcome = document.getElementById("welcome");
+
+const messageInput = document.getElementById("messageInput");
+const sendButton = document.getElementById("sendButton");
+const micButton = document.getElementById("micButton");
+
+const connectionStatus =
+    document.getElementById("connectionStatus");
+
+const inputStatus =
+    document.getElementById("inputStatus");
+
+const typingIndicator =
+    document.getElementById("typingIndicator");
+
+const toast = document.getElementById("toast");
+
+let socket = null;
+let recognition = null;
+let pendingRequests = new Map();
+let isAuthenticated = false;
+let officeOnline = false;
+let authenticationFailed = false;
+
+
+/* =========================================
+   UTILITY FUNCTIONS
+========================================= */
+
+function showToast(message) {
+
+    toast.textContent = message;
+    toast.classList.add("show");
+
+    setTimeout(() => {
+        toast.classList.remove("show");
+    }, 3000);
+}
+
+
+function getTime() {
+
+    return new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+
+}
+
+
+function scrollToBottom() {
+
+    chatArea.scrollTop = chatArea.scrollHeight;
+
+}
+
+
+function createRequestId() {
+
+    if (window.crypto &&
+        typeof window.crypto.randomUUID === "function") {
+
+        return window.crypto.randomUUID();
+
+    }
+
+    return "req-" + Date.now() +
+        "-" + Math.random().toString(16).slice(2);
+
+}
+
+
+/* =========================================
+   CONNECTION STATUS
+========================================= */
+
+function setConnectionStatus(online, message) {
+
+    connectionStatus.replaceChildren();
+
+    const dot = document.createElement("span");
+
+    dot.className = online
+        ? "dot online"
+        : "dot";
+
+    connectionStatus.appendChild(dot);
+
+    connectionStatus.appendChild(
+        document.createTextNode(message)
+    );
+
+}
+
+
+/* =========================================
+   MESSAGE DISPLAY
+========================================= */
+
+function addMessage(type, text) {
+
+    welcome.style.display = "none";
+
+    const row = document.createElement("div");
+
+    row.className = "message-row " + type;
+
+    const bubble = document.createElement("div");
+
+    bubble.className = "message-bubble";
+
+    const label = document.createElement("div");
+
+    label.className = "message-label";
+
+    label.textContent =
+        type === "user" ? "You" : "RK AI";
+
+    const content = document.createElement("div");
+
+    /*
+        textContent prevents HTML injection.
+        AI responses are displayed as plain text
+        until we implement structured responses.
+    */
+
+    content.textContent = text;
+
+    const time = document.createElement("span");
+
+    time.className = "message-time";
+    time.textContent = getTime();
+
+    bubble.appendChild(label);
+    bubble.appendChild(content);
+    bubble.appendChild(time);
+
+    row.appendChild(bubble);
+
+    messages.appendChild(row);
+
+    scrollToBottom();
+
+    return row;
+}
+
+
+/* =========================================
+   SEND MESSAGE
+========================================= */
+
+function sendMessage() {
+
+    const message = messageInput.value.trim();
+
+    if (!message) {
+        return;
+    }
+
+    addMessage("user", message);
+
+    messageInput.value = "";
+    messageInput.style.height = "auto";
+
+    if (CONFIG.demoMode) {
+
+        showDemoResponse(message);
+
+        return;
+    }
+
+    if (!socket ||
+        socket.readyState !== WebSocket.OPEN) {
+
+        addMessage(
+            "assistant",
+            "The messaging server is not connected. Please try again when the connection is available."
+        );
+
+        return;
+    }
+
+    sendToBackend(message);
+
+}
+
+
+/* =========================================
+   BACKEND MESSAGE
+========================================= */
+
+function sendToBackend(message) {
+
+    if (!socket || socket.readyState !== WebSocket.OPEN || !isAuthenticated) {
+        addMessage("assistant", "The mobile connection is not authenticated yet. Please wait for the connection and try again.");
+        return;
+    }
+
+    if (!officeOnline) {
+        addMessage("assistant", "The office application is currently offline. Open RK AI Business Assistant on the office PC and wait until it connects.");
+        return;
+    }
+
+    const requestId = createRequestId();
+
+    const payload = {
+        type: "user_message",
+        requestId: requestId,
+        conversationId: "mobile-default",
+        message: message,
+        timestamp: new Date().toISOString()
+    };
+
+    try {
+        // Register before sending so a very fast response cannot arrive first.
+        pendingRequests.set(requestId, {
+            message: message,
+            time: Date.now()
+        });
+
+        socket.send(JSON.stringify(payload));
+        typingIndicator.hidden = false;
+        scrollToBottom();
+
+        setTimeout(() => {
+            if (pendingRequests.has(requestId)) {
+                pendingRequests.delete(requestId);
+                typingIndicator.hidden = pendingRequests.size === 0;
+                addMessage("assistant", "The office assistant has not responded yet. Check the desktop connection and try again.");
+            }
+        }, 60000);
+
+    }
+    catch (error) {
+        pendingRequests.delete(requestId);
+        typingIndicator.hidden = pendingRequests.size === 0;
+        addMessage("assistant", "Unable to send your message. Please reconnect and try again.");
+        console.error("Send message failed:", error);
+    }
+}
+
+
+/* =========================================
+   WEBSOCKET CONNECTION
+========================================= */
+
+function connectBackend() {
+
+    if (!CONFIG.websocketUrl || CONFIG.websocketUrl.includes("YOUR-WORKER")) {
+        setConnectionStatus(false, "Set Worker URL in CONFIG");
+        return;
+    }
+
+    if (!CONFIG.mobileToken || CONFIG.mobileToken === "PASTE_YOUR_MOBILE_TOKEN_HERE") {
+        setConnectionStatus(false, "Set mobile token in CONFIG");
+        return;
+    }
+
+    try {
+        authenticationFailed = false;
+        isAuthenticated = false;
+        officeOnline = false;
+        setConnectionStatus(false, "Connecting...");
+
+        socket = new WebSocket(CONFIG.websocketUrl);
+
+        socket.onopen = function () {
+            // A successful WebSocket handshake is NOT authentication.
+            // The Worker expects this exact authentication message.
+            socket.send(JSON.stringify({
+                type: "authenticate",
+                role: "mobile",
+                token: CONFIG.mobileToken
+            }));
+            setConnectionStatus(false, "Authenticating...");
+        };
+
+        socket.onmessage = function (event) {
+            try {
+                const data = JSON.parse(event.data);
+                handleBackendMessage(data);
+            }
+            catch (error) {
+                console.error("Invalid server response:", error);
+            }
+        };
+
+        socket.onerror = function (error) {
+            console.error("WebSocket error:", error);
+        };
+
+        socket.onclose = function () {
+            isAuthenticated = false;
+            officeOnline = false;
+            setConnectionStatus(false, "Disconnected");
+            typingIndicator.hidden = true;
+            pendingRequests.clear();
+
+            // Do not loop forever when the Worker rejected the configured token.
+            if (CONFIG.websocketUrl && !authenticationFailed) {
+                setTimeout(connectBackend, 5000);
+            }
+        };
+
+    }
+    catch (error) {
+        console.error("Connection failed:", error);
+        setConnectionStatus(false, "Connection failed");
+    }
+}
+
+
+/* =========================================
+   RECEIVE BACKEND RESPONSE
+========================================= */
+
+function handleBackendMessage(data) {
+
+    if (!data || typeof data.type !== "string") return;
+
+    switch (data.type) {
+
+        case "authenticated":
+            if (data.role !== "mobile") {
+                authenticationFailed = true;
+                setConnectionStatus(false, "Unexpected authentication role");
+                socket?.close();
+                return;
+            }
+            isAuthenticated = true;
+            setConnectionStatus(false, "Authenticated · checking office...");
+            showToast("Mobile authenticated with RK AI server");
+            break;
+
+        case "authentication_failed":
+            authenticationFailed = true;
+            isAuthenticated = false;
+            officeOnline = false;
+            setConnectionStatus(false, "Authentication failed — check token");
+            showToast("Mobile token rejected by server");
+            if (socket && socket.readyState === WebSocket.OPEN) socket.close();
+            break;
+
+        case "office_status":
+            officeOnline = Boolean(data.online);
+            if (isAuthenticated) {
+                setConnectionStatus(officeOnline, officeOnline
+                    ? "Connected · office online"
+                    : "Connected · office offline");
+            }
+            break;
+
+        case "message_received":
+            // The Worker accepted and forwarded the request; the AI answer follows separately.
+            if (data.message) console.info("Worker:", data.message);
+            break;
+
+        case "assistant_response": {
+            const requestId = data.requestId;
+            if (requestId && pendingRequests.has(requestId)) {
+                pendingRequests.delete(requestId);
+                typingIndicator.hidden = pendingRequests.size === 0;
+                addMessage("assistant", String(data.message || ""));
+            }
+            break;
+        }
+
+        case "assistant_error":
+        case "office_unavailable":
+        case "error": {
+            if (data.requestId) pendingRequests.delete(data.requestId);
+            else if (data.type === "office_unavailable") pendingRequests.clear();
+            typingIndicator.hidden = pendingRequests.size === 0;
+            addMessage("assistant", String(data.message ||
+                (data.type === "office_unavailable"
+                    ? "The office application is unavailable."
+                    : "The server could not process the request.")));
+            break;
+        }
+
+        case "delivery_status":
+            // Delivery acknowledgement only; the assistant_response carries the answer.
+            console.info("Office delivery status:", data);
+            break;
+
+        default:
+            console.info("Unhandled server message:", data);
+            break;
+    }
+}
+
+
+/* =========================================
+   DEMO MODE
+   LOCAL INTERFACE TESTING ONLY
+========================================= */
+
+function showDemoResponse(message) {
+
+    typingIndicator.hidden = false;
+
+    scrollToBottom();
+
+    setTimeout(() => {
+
+        typingIndicator.hidden = true;
+
+        addMessage(
+            "assistant",
+            "This is a local interface preview.\n\n" +
+            "Your message was received by the browser:\n\n" +
+            message +
+            "\n\nThe Cloudflare messaging server and office VB.NET AI connection have not been configured yet."
+        );
+
+    }, 700);
+
+}
+
+
+/* =========================================
+   VOICE INPUT
+========================================= */
+
+const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+
+    recognition = new SpeechRecognition();
+
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    recognition.onstart = function () {
+
+        micButton.classList.add("recording");
+
+        inputStatus.textContent = "Listening...";
+
+    };
+
+
+    recognition.onresult = function (event) {
+
+        let transcript = "";
+
+        for (
+            let i = event.resultIndex;
+            i < event.results.length;
+            i++
+        ) {
+
+            transcript +=
+                event.results[i][0].transcript;
+
+        }
+
+        messageInput.value = transcript;
+
+        messageInput.style.height = "auto";
+
+        messageInput.style.height =
+            Math.min(messageInput.scrollHeight, 130) + "px";
+
+    };
+
+
+    recognition.onerror = function (event) {
+
+        showToast(
+            "Voice input error: " + event.error
+        );
+
+    };
+
+
+    recognition.onend = function () {
+
+        micButton.classList.remove("recording");
+
+        inputStatus.textContent =
+            "Text and voice supported";
+
+    };
+
+}
+else {
+
+    micButton.disabled = true;
+
+    inputStatus.textContent =
+        "Voice recognition is not supported in this browser";
+
+}
+
+
+micButton.addEventListener("click", function () {
+
+    if (!recognition) {
+        return;
+    }
+
+    try {
+
+        recognition.start();
+
+    }
+    catch (error) {
+
+        showToast("Voice recognition is already active");
+
+    }
+
+});
+
+
+/* =========================================
+   BUTTON EVENTS
+========================================= */
+
+sendButton.addEventListener("click", sendMessage);
+
+
+messageInput.addEventListener("keydown", function (event) {
+
+    if (
+        event.key === "Enter" &&
+        !event.shiftKey &&
+        !event.isComposing
+    ) {
+
+        event.preventDefault();
+
+        sendMessage();
+
+    }
+
+});
+
+
+messageInput.addEventListener("input", function () {
+
+    this.style.height = "auto";
+
+    this.style.height =
+        Math.min(this.scrollHeight, 130) + "px";
+
+});
+
+
+/* =========================================
+   SUGGESTION BUTTONS
+========================================= */
+
+document.querySelectorAll(".suggestion").forEach(button => {
+
+    button.addEventListener("click", function () {
+
+        messageInput.value = this.dataset.message;
+
+        sendMessage();
+
+    });
+
+});
+
+
+/* =========================================
+   CLEAR CHAT
+========================================= */
+
+document.getElementById("clearButton")
+    .addEventListener("click", function () {
+
+        if (!confirm("Clear this conversation?")) {
+            return;
+        }
+
+        messages.replaceChildren();
+
+        welcome.style.display = "block";
+
+        typingIndicator.hidden = true;
+
+        pendingRequests.clear();
+
+        messageInput.value = "";
+
+        showToast("Conversation cleared");
+
+    });
+
+
+/* =========================================
+   INITIALIZATION
+========================================= */
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    if (CONFIG.demoMode) {
+        setConnectionStatus(false, "Local preview mode");
+    }
+    else {
+        connectBackend();
+    }
+
+});
+
+</script>
+
+
+
+<script>
+if ("serviceWorker" in navigator) {
+
+    window.addEventListener("load", async () => {
+
+        try {
+
+            const registration =
+                await navigator.serviceWorker.register(
+                    "./service-worker.js"
+                );
+
+            console.log(
+                "RK AI Service Worker registered:",
+                registration.scope
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Service Worker registration failed:",
+                error
+            );
+
+        }
+
+    });
+
+}
+</script>
+</body>
+</html>
