@@ -6,17 +6,12 @@
 <meta name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#101827">
-<link rel="manifest" href="./manifest.json">
 <meta name="description" content="RK AI Mobile Business Assistant">
+<link rel="manifest" href="./manifest.json">
 
 <title>RK AI Mobile Assistant</title>
 
 <style>
-/* =========================================
-   RK AI MOBILE ASSISTANT
-   SINGLE FILE: HTML + CSS + JAVASCRIPT
-========================================= */
-
 :root {
     --bg: #101827;
     --panel: #172235;
@@ -135,6 +130,7 @@ button {
 
 .chat-area {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     padding: 24px 18px;
     scroll-behavior: smooth;
@@ -360,7 +356,6 @@ button:disabled {
 /* MOBILE */
 
 @media (max-width: 600px) {
-
     .header {
         min-height: 68px;
         padding: 10px 13px;
@@ -408,55 +403,43 @@ button:disabled {
 
 <div class="app">
 
-    <!-- HEADER -->
     <header class="header">
-
         <div class="brand">
-
             <div class="logo">RK</div>
 
             <div>
                 <h1>RK AI Assistant</h1>
-
                 <div class="connection" id="connectionStatus">
                     <span class="dot"></span>
                     Backend not connected
                 </div>
             </div>
-
         </div>
 
         <div class="header-actions">
-
             <button class="icon-button"
                     id="clearButton"
-                    title="Clear chat">
+                    title="Clear chat"
+                    aria-label="Clear chat">
                 ↻
             </button>
-
         </div>
-
     </header>
 
-
-    <!-- CHAT -->
     <main class="chat-area" id="chatArea">
 
         <section class="welcome" id="welcome">
-
             <div class="welcome-logo">RK</div>
 
             <h2>Welcome to RK AI</h2>
 
             <p>
                 Your mobile business assistant.
-
                 Ask questions about sales, purchases,
                 inventory, suppliers and customers.
             </p>
 
             <div class="suggestions">
-
                 <button class="suggestion"
                     data-message="Check my today's total sales">
                     Today's total sales
@@ -476,9 +459,7 @@ button:disabled {
                     data-message="Show my purchase summary">
                     Purchase summary
                 </button>
-
             </div>
-
         </section>
 
         <div id="messages"></div>
@@ -491,8 +472,6 @@ button:disabled {
 
     </main>
 
-
-    <!-- MESSAGE INPUT -->
     <footer class="input-section">
 
         <div class="input-container">
@@ -501,74 +480,66 @@ button:disabled {
                 id="messageInput"
                 placeholder="Ask your business assistant..."
                 rows="1"
-                maxlength="4000">
+                maxlength="4000"
+                aria-label="Message">
             </textarea>
 
             <button class="mic-button"
                     id="micButton"
-                    title="Voice input">
+                    title="Start voice recording"
+                    aria-label="Start voice recording">
                 🎤
             </button>
 
             <button class="send-button"
                     id="sendButton"
-                    title="Send message">
+                    title="Send message"
+                    aria-label="Send message">
                 ➤
             </button>
 
         </div>
 
         <div class="input-footer">
-
             <span id="inputStatus">
-                Text and voice supported
+                Text and multilingual voice supported
             </span>
-
             <span>RK Developer Studio</span>
-
         </div>
 
     </footer>
 
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 
 <script>
+"use strict";
+
 /* =========================================
-   RK AI MOBILE ASSISTANT
-   JAVASCRIPT
+   CONFIGURATION
 ========================================= */
 
-/*
-    BACKEND CONFIGURATION
-
-    Leave empty while testing the interface.
-
-    Later, we will add your Cloudflare Worker
-    WebSocket URL here.
-
-    Example format:
-    wss://your-worker.your-subdomain.workers.dev/ws
-
-    Never put SQL credentials or AI provider
-    API keys in this file.
-*/
-
 const CONFIG = {
-    // Replace this with your deployed Cloudflare Worker WebSocket URL.
-    // Example: "wss://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev/ws"
-    websocketUrl: "wss://rkai-mobile-assistant.rkdeveloperstudio.workers.dev/ws",
+    websocketUrl:
+        "wss://rkai-mobile-assistant.rkdeveloperstudio.workers.dev/ws",
 
-    // DEVELOPMENT ONLY. Keep your existing test token here locally.
-    // Do not publish this file with a permanent token inside it.
+    /*
+       Replace this placeholder locally with the new MOBILE_TOKEN
+       configured in Cloudflare.
+
+       Never publish a permanent shared token in public HTML.
+    */
     mobileToken: "1b45eb76dbb603fcf7977245a57699f065851f1e2c23506e5d46458d48a0631b",
 
-    // This route must be added to the Cloudflare Worker before voice
-    // transcription can work. It must accept multipart/form-data field "audio"
-    // and return JSON: { "text": "recognized words", "language": "ml" }.
-    transcriptionUrl: "https://rkai-mobile-assistant.rkdeveloperstudio.workers.dev/api/transcribe",
+    /*
+       Existing Cloudflare Worker transcription endpoint.
+       Expected multipart field: file
+       Expected success response: { success: true, text: "..." }
+    */
+    transcriptionUrl:
+        "https://rkai-mobile-assistant.rkdeveloperstudio.workers.dev/api/transcribe",
 
     demoMode: false
 };
@@ -597,12 +568,20 @@ const typingIndicator =
 
 const toast = document.getElementById("toast");
 
+
+/* =========================================
+   APPLICATION STATE
+========================================= */
+
 let socket = null;
-let recognition = null;
+
 let pendingRequests = new Map();
+
 let isAuthenticated = false;
 let officeOnline = false;
 let authenticationFailed = false;
+
+let reconnectTimer = null;
 
 
 /* =========================================
@@ -610,45 +589,52 @@ let authenticationFailed = false;
 ========================================= */
 
 function showToast(message) {
-
     toast.textContent = message;
     toast.classList.add("show");
 
-    setTimeout(() => {
+    window.setTimeout(() => {
         toast.classList.remove("show");
     }, 3000);
 }
 
 
 function getTime() {
-
     return new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit"
     });
-
 }
 
 
 function scrollToBottom() {
-
     chatArea.scrollTop = chatArea.scrollHeight;
-
 }
 
 
 function createRequestId() {
-
     if (window.crypto &&
         typeof window.crypto.randomUUID === "function") {
-
         return window.crypto.randomUUID();
-
     }
 
     return "req-" + Date.now() +
         "-" + Math.random().toString(16).slice(2);
+}
 
+
+function hasConfiguredToken() {
+    return Boolean(
+        CONFIG.mobileToken &&
+        !CONFIG.mobileToken.startsWith("PASTE_")
+    );
+}
+
+
+function updateInputHeight() {
+    messageInput.style.height = "auto";
+
+    messageInput.style.height =
+        Math.min(messageInput.scrollHeight, 130) + "px";
 }
 
 
@@ -657,7 +643,6 @@ function createRequestId() {
 ========================================= */
 
 function setConnectionStatus(online, message) {
-
     connectionStatus.replaceChildren();
 
     const dot = document.createElement("span");
@@ -671,7 +656,6 @@ function setConnectionStatus(online, message) {
     connectionStatus.appendChild(
         document.createTextNode(message)
     );
-
 }
 
 
@@ -680,19 +664,15 @@ function setConnectionStatus(online, message) {
 ========================================= */
 
 function addMessage(type, text) {
-
     welcome.style.display = "none";
 
     const row = document.createElement("div");
-
     row.className = "message-row " + type;
 
     const bubble = document.createElement("div");
-
     bubble.className = "message-bubble";
 
     const label = document.createElement("div");
-
     label.className = "message-label";
 
     label.textContent =
@@ -700,16 +680,10 @@ function addMessage(type, text) {
 
     const content = document.createElement("div");
 
-    /*
-        textContent prevents HTML injection.
-        AI responses are displayed as plain text
-        until we implement structured responses.
-    */
-
-    content.textContent = text;
+    // textContent prevents HTML injection.
+    content.textContent = String(text ?? "");
 
     const time = document.createElement("span");
-
     time.className = "message-time";
     time.textContent = getTime();
 
@@ -718,7 +692,6 @@ function addMessage(type, text) {
     bubble.appendChild(time);
 
     row.appendChild(bubble);
-
     messages.appendChild(row);
 
     scrollToBottom();
@@ -732,7 +705,6 @@ function addMessage(type, text) {
 ========================================= */
 
 function sendMessage() {
-
     const message = messageInput.value.trim();
 
     if (!message) {
@@ -745,9 +717,7 @@ function sendMessage() {
     messageInput.style.height = "auto";
 
     if (CONFIG.demoMode) {
-
         showDemoResponse(message);
-
         return;
     }
 
@@ -763,23 +733,33 @@ function sendMessage() {
     }
 
     sendToBackend(message);
-
 }
 
 
 /* =========================================
-   BACKEND MESSAGE
+   SEND TO OFFICE BACKEND
 ========================================= */
 
 function sendToBackend(message) {
 
-    if (!socket || socket.readyState !== WebSocket.OPEN || !isAuthenticated) {
-        addMessage("assistant", "The mobile connection is not authenticated yet. Please wait for the connection and try again.");
+    if (!socket ||
+        socket.readyState !== WebSocket.OPEN ||
+        !isAuthenticated) {
+
+        addMessage(
+            "assistant",
+            "The mobile connection is not authenticated yet. Please wait for the connection and try again."
+        );
+
         return;
     }
 
     if (!officeOnline) {
-        addMessage("assistant", "The office application is currently offline. Open RK AI Business Assistant on the office PC and wait until it connects.");
+        addMessage(
+            "assistant",
+            "The office application is currently offline. Open RK AI Business Assistant on the office PC and wait until it connects."
+        );
+
         return;
     }
 
@@ -794,29 +774,41 @@ function sendToBackend(message) {
     };
 
     try {
-        // Register before sending so a very fast response cannot arrive first.
         pendingRequests.set(requestId, {
             message: message,
             time: Date.now()
         });
 
         socket.send(JSON.stringify(payload));
+
         typingIndicator.hidden = false;
         scrollToBottom();
 
-        setTimeout(() => {
+        window.setTimeout(() => {
             if (pendingRequests.has(requestId)) {
                 pendingRequests.delete(requestId);
-                typingIndicator.hidden = pendingRequests.size === 0;
-                addMessage("assistant", "The office assistant has not responded yet. Check the desktop connection and try again.");
+
+                typingIndicator.hidden =
+                    pendingRequests.size === 0;
+
+                addMessage(
+                    "assistant",
+                    "The office assistant has not responded yet. Check the desktop connection and try again."
+                );
             }
         }, 60000);
 
-    }
-    catch (error) {
+    } catch (error) {
         pendingRequests.delete(requestId);
-        typingIndicator.hidden = pendingRequests.size === 0;
-        addMessage("assistant", "Unable to send your message. Please reconnect and try again.");
+
+        typingIndicator.hidden =
+            pendingRequests.size === 0;
+
+        addMessage(
+            "assistant",
+            "Unable to send your message. Please reconnect and try again."
+        );
+
         console.error("Send message failed:", error);
     }
 }
@@ -828,13 +820,26 @@ function sendToBackend(message) {
 
 function connectBackend() {
 
-    if (!CONFIG.websocketUrl || CONFIG.websocketUrl.includes("YOUR-WORKER")) {
+    if (CONFIG.demoMode) {
+        setConnectionStatus(false, "Local preview mode");
+        return;
+    }
+
+    if (!CONFIG.websocketUrl ||
+        CONFIG.websocketUrl.includes("YOUR-WORKER")) {
+
         setConnectionStatus(false, "Set Worker URL in CONFIG");
         return;
     }
 
-    if (!CONFIG.mobileToken || CONFIG.mobileToken === "PASTE_YOUR_MOBILE_TOKEN_HERE") {
-        setConnectionStatus(false, "Set mobile token in CONFIG");
+    if (!hasConfiguredToken()) {
+        setConnectionStatus(false, "Configure mobile token");
+        return;
+    }
+
+    if (socket &&
+        (socket.readyState === WebSocket.OPEN ||
+         socket.readyState === WebSocket.CONNECTING)) {
         return;
     }
 
@@ -842,18 +847,19 @@ function connectBackend() {
         authenticationFailed = false;
         isAuthenticated = false;
         officeOnline = false;
+
         setConnectionStatus(false, "Connecting...");
 
         socket = new WebSocket(CONFIG.websocketUrl);
 
         socket.onopen = function () {
-            // A successful WebSocket handshake is NOT authentication.
-            // The Worker expects this exact authentication message.
+
             socket.send(JSON.stringify({
                 type: "authenticate",
                 role: "mobile",
                 token: CONFIG.mobileToken
             }));
+
             setConnectionStatus(false, "Authenticating...");
         };
 
@@ -861,9 +867,11 @@ function connectBackend() {
             try {
                 const data = JSON.parse(event.data);
                 handleBackendMessage(data);
-            }
-            catch (error) {
-                console.error("Invalid server response:", error);
+            } catch (error) {
+                console.error(
+                    "Invalid server response:",
+                    error
+                );
             }
         };
 
@@ -874,18 +882,29 @@ function connectBackend() {
         socket.onclose = function () {
             isAuthenticated = false;
             officeOnline = false;
+
             setConnectionStatus(false, "Disconnected");
+
             typingIndicator.hidden = true;
             pendingRequests.clear();
 
-            // Do not loop forever when the Worker rejected the configured token.
-            if (CONFIG.websocketUrl && !authenticationFailed) {
-                setTimeout(connectBackend, 5000);
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+
+            if (!authenticationFailed &&
+                !CONFIG.demoMode &&
+                hasConfiguredToken()) {
+
+                reconnectTimer = window.setTimeout(
+                    connectBackend,
+                    5000
+                );
             }
         };
 
-    }
-    catch (error) {
+    } catch (error) {
         console.error("Connection failed:", error);
         setConnectionStatus(false, "Connection failed");
     }
@@ -898,75 +917,153 @@ function connectBackend() {
 
 function handleBackendMessage(data) {
 
-    if (!data || typeof data.type !== "string") return;
+    if (!data ||
+        typeof data.type !== "string") {
+        return;
+    }
 
     switch (data.type) {
 
         case "authenticated":
+
             if (data.role !== "mobile") {
                 authenticationFailed = true;
-                setConnectionStatus(false, "Unexpected authentication role");
+
+                setConnectionStatus(
+                    false,
+                    "Unexpected authentication role"
+                );
+
                 socket?.close();
                 return;
             }
+
             isAuthenticated = true;
-            setConnectionStatus(false, "Authenticated · checking office...");
-            showToast("Mobile authenticated with RK AI server");
+
+            setConnectionStatus(
+                false,
+                "Authenticated · checking office..."
+            );
+
+            showToast(
+                "Mobile authenticated with RK AI server"
+            );
+
             break;
 
+
         case "authentication_failed":
+
             authenticationFailed = true;
             isAuthenticated = false;
             officeOnline = false;
-            setConnectionStatus(false, "Authentication failed — check token");
+
+            setConnectionStatus(
+                false,
+                "Authentication failed — check token"
+            );
+
             showToast("Mobile token rejected by server");
-            if (socket && socket.readyState === WebSocket.OPEN) socket.close();
+
+            if (socket &&
+                socket.readyState === WebSocket.OPEN) {
+                socket.close();
+            }
+
             break;
+
 
         case "office_status":
+
             officeOnline = Boolean(data.online);
+
             if (isAuthenticated) {
-                setConnectionStatus(officeOnline, officeOnline
-                    ? "Connected · office online"
-                    : "Connected · office offline");
+                setConnectionStatus(
+                    officeOnline,
+                    officeOnline
+                        ? "Connected · office online"
+                        : "Connected · office offline"
+                );
             }
+
             break;
+
 
         case "message_received":
-            // The Worker accepted and forwarded the request; the AI answer follows separately.
-            if (data.message) console.info("Worker:", data.message);
+
+            if (data.message) {
+                console.info("Worker:", data.message);
+            }
+
             break;
 
+
         case "assistant_response": {
+
             const requestId = data.requestId;
-            if (requestId && pendingRequests.has(requestId)) {
+
+            if (requestId &&
+                pendingRequests.has(requestId)) {
+
                 pendingRequests.delete(requestId);
-                typingIndicator.hidden = pendingRequests.size === 0;
-                addMessage("assistant", String(data.message || ""));
+
+                typingIndicator.hidden =
+                    pendingRequests.size === 0;
+
+                addMessage(
+                    "assistant",
+                    String(data.message || "")
+                );
             }
+
             break;
         }
+
 
         case "assistant_error":
         case "office_unavailable":
         case "error": {
-            if (data.requestId) pendingRequests.delete(data.requestId);
-            else if (data.type === "office_unavailable") pendingRequests.clear();
-            typingIndicator.hidden = pendingRequests.size === 0;
-            addMessage("assistant", String(data.message ||
-                (data.type === "office_unavailable"
-                    ? "The office application is unavailable."
-                    : "The server could not process the request.")));
+
+            if (data.requestId) {
+                pendingRequests.delete(data.requestId);
+            } else if (data.type === "office_unavailable") {
+                pendingRequests.clear();
+            }
+
+            typingIndicator.hidden =
+                pendingRequests.size === 0;
+
+            addMessage(
+                "assistant",
+                String(
+                    data.message ||
+                    (data.type === "office_unavailable"
+                        ? "The office application is unavailable."
+                        : "The server could not process the request.")
+                )
+            );
+
             break;
         }
 
+
         case "delivery_status":
-            // Delivery acknowledgement only; the assistant_response carries the answer.
-            console.info("Office delivery status:", data);
+
+            console.info(
+                "Office delivery status:",
+                data
+            );
+
             break;
 
+
         default:
-            console.info("Unhandled server message:", data);
+
+            console.info(
+                "Unhandled server message:",
+                data
+            );
+
             break;
     }
 }
@@ -974,16 +1071,14 @@ function handleBackendMessage(data) {
 
 /* =========================================
    DEMO MODE
-   LOCAL INTERFACE TESTING ONLY
 ========================================= */
 
 function showDemoResponse(message) {
 
     typingIndicator.hidden = false;
-
     scrollToBottom();
 
-    setTimeout(() => {
+    window.setTimeout(() => {
 
         typingIndicator.hidden = true;
 
@@ -996,299 +1091,554 @@ function showDemoResponse(message) {
         );
 
     }, 700);
-
 }
 
 
 /* =========================================
    MULTILINGUAL VOICE INPUT
-   Audio is sent to the Worker transcription endpoint.
-   The transcription service must detect the spoken language automatically.
 ========================================= */
 
 let mediaRecorder = null;
 let voiceStream = null;
 let voiceChunks = [];
 let audioContext = null;
-let analyser = null;
-let silenceCheckTimer = null;
-let speechStarted = false;
-let lastSoundAt = 0;
+
 let voiceStopping = false;
+let maximumRecordingTimer = null;
+let voiceStartedAt = 0;
 
 const VOICE_SETTINGS = {
-    silenceDurationMs: 1600,
-    speechThreshold: 0.018,
-    minimumRecordingMs: 500,
-    maximumRecordingMs: 60000
+    maximumRecordingMs: 60000,
+    minimumAudioBytes: 1500,
+    minimumRecordingMs: 500
 };
 
-let voiceStartedAt = 0;
-let maximumRecordingTimer = null;
 
-function updateInputHeight() {
-    messageInput.style.height = "auto";
-    messageInput.style.height = Math.min(messageInput.scrollHeight, 130) + "px";
+/* =========================================
+   AUDIO MIME / FILE EXTENSION
+========================================= */
+
+function getAudioFileExtension(mimeType) {
+
+    const mime = String(mimeType || "")
+        .toLowerCase()
+        .split(";")[0]
+        .trim();
+
+    const mimeMap = {
+        "audio/webm": "webm",
+        "audio/mp4": "m4a",
+        "audio/m4a": "m4a",
+        "audio/ogg": "ogg",
+        "audio/wav": "wav",
+        "audio/x-wav": "wav",
+        "audio/mpeg": "mp3",
+        "audio/mp3": "mp3",
+        "audio/flac": "flac"
+    };
+
+    return mimeMap[mime] || "webm";
 }
 
+
+/* =========================================
+   START RECORDING
+========================================= */
+
 async function startVoiceRecording() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
-        showToast("Audio recording is not supported in this browser. Please use a modern browser over HTTPS.");
+
+    if (!navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia ||
+        !window.MediaRecorder) {
+
+        showToast(
+            "Audio recording is not supported. Use a modern browser over HTTPS."
+        );
+
         return;
     }
 
-    if (voiceStopping || mediaRecorder) return;
+    if (voiceStopping || mediaRecorder) {
+        return;
+    }
+
+    if (micButton.disabled) {
+        return;
+    }
 
     try {
-        voiceStream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true
-            }
-        });
+
+        voiceStream =
+            await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                }
+            });
 
         voiceChunks = [];
-        speechStarted = false;
         voiceStopping = false;
         voiceStartedAt = Date.now();
-        lastSoundAt = 0;
 
-        const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-            ? "audio/webm;codecs=opus"
-            : (MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "");
+        let mimeType = "";
+
+        if (MediaRecorder.isTypeSupported(
+            "audio/webm;codecs=opus"
+        )) {
+            mimeType = "audio/webm;codecs=opus";
+        } else if (MediaRecorder.isTypeSupported(
+            "audio/mp4"
+        )) {
+            mimeType = "audio/mp4";
+        } else if (MediaRecorder.isTypeSupported(
+            "audio/ogg;codecs=opus"
+        )) {
+            mimeType = "audio/ogg;codecs=opus";
+        }
 
         mediaRecorder = mimeType
-            ? new MediaRecorder(voiceStream, { mimeType })
+            ? new MediaRecorder(
+                voiceStream,
+                { mimeType: mimeType }
+            )
             : new MediaRecorder(voiceStream);
 
-        mediaRecorder.ondataavailable = event => {
-            if (event.data && event.data.size > 0) voiceChunks.push(event.data);
+
+        mediaRecorder.ondataavailable = function (event) {
+            if (event.data &&
+                event.data.size > 0) {
+                voiceChunks.push(event.data);
+            }
         };
 
-        mediaRecorder.onerror = event => {
-            console.error("MediaRecorder error:", event.error || event);
+
+        mediaRecorder.onerror = function (event) {
+
+            console.error(
+                "MediaRecorder error:",
+                event.error || event
+            );
+
             showToast("Microphone recording failed.");
+
             stopVoiceRecording(false);
         };
 
-        mediaRecorder.onstop = async () => {
-            const recordedType = mediaRecorder ? mediaRecorder.mimeType : "audio/webm";
-            const audioBlob = new Blob(voiceChunks, { type: recordedType || "audio/webm" });
+
+        mediaRecorder.onstop = async function () {
+
+            const recordedType =
+                mediaRecorder
+                    ? mediaRecorder.mimeType
+                    : "audio/webm";
+
+            const audioBlob = new Blob(
+                voiceChunks,
+                {
+                    type: recordedType || "audio/webm"
+                }
+            );
+
+            const recordingDuration =
+                Date.now() - voiceStartedAt;
+
             cleanupVoiceCapture();
 
-            if (audioBlob.size < 1500) {
-                showToast("No clear speech was detected. Please try again.");
+            if (recordingDuration <
+                VOICE_SETTINGS.minimumRecordingMs) {
+
+                showToast(
+                    "Recording was too short. Please try again."
+                );
+
+                return;
+            }
+
+            if (audioBlob.size <
+                VOICE_SETTINGS.minimumAudioBytes) {
+
+                showToast(
+                    "No clear audio was captured. Please try again."
+                );
+
                 return;
             }
 
             await transcribeAndSend(audioBlob);
         };
 
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioContext.createMediaStreamSource(voiceStream);
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 2048;
-        source.connect(analyser);
 
         mediaRecorder.start(250);
+
         micButton.classList.add("recording");
         micButton.title = "Stop voice recording";
-        inputStatus.textContent = "Listening — speak now...";
-        showToast("Speak naturally. Your voice will send after you stop speaking.");
+        micButton.setAttribute(
+            "aria-label",
+            "Stop voice recording"
+        );
 
-        const samples = new Uint8Array(analyser.fftSize);
-        silenceCheckTimer = window.setInterval(() => {
-            if (!mediaRecorder || mediaRecorder.state !== "recording" || !analyser) return;
+        inputStatus.textContent =
+            "Recording — tap microphone to stop";
 
-            analyser.getByteTimeDomainData(samples);
-            let sum = 0;
-            for (let i = 0; i < samples.length; i++) {
-                const normalized = (samples[i] - 128) / 128;
-                sum += normalized * normalized;
-            }
-            const rms = Math.sqrt(sum / samples.length);
-            const now = Date.now();
+        showToast(
+            "Recording started. Tap the microphone again when finished."
+        );
 
-            if (rms >= VOICE_SETTINGS.speechThreshold) {
-                speechStarted = true;
-                lastSoundAt = now;
-                inputStatus.textContent = "Speech detected...";
-            }
 
-            if (speechStarted && now - lastSoundAt >= VOICE_SETTINGS.silenceDurationMs) {
-                stopVoiceRecording(true);
-            }
-        }, 150);
+        // Safety limit: automatically stop after 60 seconds.
+        maximumRecordingTimer = window.setTimeout(
+            function () {
+                if (mediaRecorder &&
+                    mediaRecorder.state === "recording") {
 
-        maximumRecordingTimer = window.setTimeout(() => {
-            if (mediaRecorder && mediaRecorder.state === "recording") {
-                stopVoiceRecording(true);
-            }
-        }, VOICE_SETTINGS.maximumRecordingMs);
+                    showToast(
+                        "Maximum recording time reached."
+                    );
+
+                    stopVoiceRecording(true);
+                }
+            },
+            VOICE_SETTINGS.maximumRecordingMs
+        );
 
     } catch (error) {
-        console.error("Could not start microphone:", error);
+
+        console.error(
+            "Could not start microphone:",
+            error
+        );
+
         cleanupVoiceCapture();
-        showToast(error && error.name === "NotAllowedError"
-            ? "Microphone permission was denied. Allow microphone access in your browser."
-            : "Unable to start microphone. Check browser permissions and try again.");
+
+        showToast(
+            error && error.name === "NotAllowedError"
+                ? "Microphone permission was denied. Allow microphone access in your browser."
+                : "Unable to start microphone. Check browser permissions and try again."
+        );
     }
 }
 
+
+/* =========================================
+   STOP RECORDING
+========================================= */
+
 function stopVoiceRecording(shouldTranscribe) {
-    if (!mediaRecorder || mediaRecorder.state === "inactive") return;
-    voiceStopping = true;
-    if (silenceCheckTimer) {
-        clearInterval(silenceCheckTimer);
-        silenceCheckTimer = null;
+
+    if (!mediaRecorder) {
+        cleanupVoiceCapture();
+        return;
     }
+
+    if (mediaRecorder.state === "inactive") {
+        cleanupVoiceCapture();
+        return;
+    }
+
+    voiceStopping = true;
+
     if (maximumRecordingTimer) {
         clearTimeout(maximumRecordingTimer);
         maximumRecordingTimer = null;
     }
+
     if (!shouldTranscribe) {
         voiceChunks = [];
-        mediaRecorder.onstop = () => cleanupVoiceCapture();
+
+        mediaRecorder.onstop = function () {
+            cleanupVoiceCapture();
+        };
     }
+
     try {
         mediaRecorder.stop();
+
+        inputStatus.textContent = shouldTranscribe
+            ? "Preparing audio..."
+            : "Recording cancelled";
+
     } catch (error) {
-        console.error("Could not stop voice recording:", error);
+
+        console.error(
+            "Could not stop voice recording:",
+            error
+        );
+
         cleanupVoiceCapture();
     }
 }
 
+
+/* =========================================
+   CLEANUP MICROPHONE RESOURCES
+========================================= */
+
 function cleanupVoiceCapture() {
-    if (silenceCheckTimer) clearInterval(silenceCheckTimer);
-    if (maximumRecordingTimer) clearTimeout(maximumRecordingTimer);
-    silenceCheckTimer = null;
-    maximumRecordingTimer = null;
+
+    if (maximumRecordingTimer) {
+        clearTimeout(maximumRecordingTimer);
+        maximumRecordingTimer = null;
+    }
 
     if (voiceStream) {
-        voiceStream.getTracks().forEach(track => track.stop());
+        voiceStream.getTracks().forEach(
+            track => track.stop()
+        );
+
         voiceStream = null;
     }
+
     if (audioContext) {
         audioContext.close().catch(() => {});
         audioContext = null;
     }
 
     mediaRecorder = null;
-    analyser = null;
+    voiceChunks = [];
     voiceStopping = false;
+
     micButton.classList.remove("recording");
-    micButton.title = "Voice input";
-    inputStatus.textContent = "Text and multilingual voice supported";
+
+    micButton.title = "Start voice recording";
+    micButton.setAttribute(
+        "aria-label",
+        "Start voice recording"
+    );
+
+    inputStatus.textContent =
+        "Text and multilingual voice supported";
 }
 
+
+/* =========================================
+   TRANSCRIBE AUDIO THROUGH CLOUDFLARE
+========================================= */
+
 async function transcribeAndSend(audioBlob) {
-    if (!CONFIG.transcriptionUrl || !CONFIG.mobileToken ||
-        CONFIG.mobileToken === "PASTE_YOUR_EXISTING_MOBILE_TOKEN_HERE") {
-        showToast("Set the existing test token and transcription endpoint in CONFIG first.");
+
+    if (!CONFIG.transcriptionUrl) {
+        showToast(
+            "Transcription URL is missing from CONFIG."
+        );
+
         return;
     }
 
-    inputStatus.textContent = "Detecting language and transcribing...";
+    if (!hasConfiguredToken()) {
+        showToast(
+            "Configure your mobile token before using voice input."
+        );
+
+        return;
+    }
+
+    if (!audioBlob || audioBlob.size === 0) {
+        showToast("No audio data was recorded.");
+        return;
+    }
+
+    inputStatus.textContent =
+        "Detecting language and transcribing...";
+
     micButton.disabled = true;
 
     try {
+
         const formData = new FormData();
-        const extension = audioBlob.type.includes("mp4") ? "m4a" : "webm";
-        formData.append("audio", audioBlob, "voice." + extension);
 
-        const response = await fetch(CONFIG.transcriptionUrl, {
-            method: "POST",
-            headers: {
-                "Authorization": "Bearer " + CONFIG.mobileToken
-            },
-            body: formData
-        });
+        const extension =
+            getAudioFileExtension(audioBlob.type);
 
-        const result = await response.json().catch(() => ({}));
+        /*
+           IMPORTANT:
+           Your Cloudflare Worker expects multipart field "file".
+           Do not rename this to "audio".
+        */
+
+        formData.append(
+            "file",
+            audioBlob,
+            "voice." + extension
+        );
+
+
+        const response = await fetch(
+            CONFIG.transcriptionUrl,
+            {
+                method: "POST",
+
+                headers: {
+                    "X-Mobile-Token": CONFIG.mobileToken
+                },
+
+                /*
+                   Do not manually set Content-Type.
+                   The browser must generate the multipart boundary.
+                */
+
+                body: formData
+            }
+        );
+
+
+        const result = await response
+            .json()
+            .catch(() => ({}));
+
+
         if (!response.ok) {
-            throw new Error(result.message || "Transcription service returned HTTP " + response.status);
+
+            throw new Error(
+                result.error ||
+                result.message ||
+                "Transcription service returned HTTP " +
+                    response.status
+            );
         }
 
-        const transcript = String(result.text || result.transcript || "").trim();
+
+        if (!result.success) {
+
+            throw new Error(
+                result.error ||
+                "Transcription was unsuccessful."
+            );
+        }
+
+
+        const transcript =
+            String(result.text || "").trim();
+
+
         if (!transcript) {
-            throw new Error("No speech could be recognized. Please try again.");
+
+            throw new Error(
+                "No speech could be recognized. Please try again."
+            );
         }
 
-        // Show the detected transcript, then use the existing text-message flow.
+
+        // Display the recognized words in the input box.
         messageInput.value = transcript;
+
         updateInputHeight();
+
+
         if (result.language) {
-            console.info("Detected speech language:", result.language);
+            console.info(
+                "Detected speech language:",
+                result.language
+            );
         }
+
+
+        /*
+           Reuse the existing messaging pipeline.
+
+           Transcript -> sendMessage()
+           -> sendToBackend()
+           -> Cloudflare WebSocket
+           -> Office VB.NET application
+        */
+
         sendMessage();
 
     } catch (error) {
-        console.error("Voice transcription failed:", error);
-        showToast(error.message || "Voice transcription failed. Please try again.");
+
+        console.error(
+            "Voice transcription failed:",
+            error
+        );
+
+        showToast(
+            error.message ||
+            "Voice transcription failed. Please try again."
+        );
+
     } finally {
+
         micButton.disabled = false;
-        inputStatus.textContent = "Text and multilingual voice supported";
+
+        inputStatus.textContent =
+            "Text and multilingual voice supported";
     }
 }
 
-micButton.addEventListener("click", function () {
-    if (mediaRecorder && mediaRecorder.state === "recording") {
-        stopVoiceRecording(true);
-    } else {
-        startVoiceRecording();
+
+/* =========================================
+   MICROPHONE BUTTON
+========================================= */
+
+micButton.addEventListener(
+    "click",
+    function () {
+
+        if (mediaRecorder &&
+            mediaRecorder.state === "recording") {
+
+            stopVoiceRecording(true);
+
+        } else if (!mediaRecorder) {
+
+            startVoiceRecording();
+        }
     }
-});
+);
+
 
 /* =========================================
    BUTTON EVENTS
 ========================================= */
 
-sendButton.addEventListener("click", sendMessage);
+sendButton.addEventListener(
+    "click",
+    sendMessage
+);
 
 
-messageInput.addEventListener("keydown", function (event) {
+messageInput.addEventListener(
+    "keydown",
+    function (event) {
 
-    if (
-        event.key === "Enter" &&
-        !event.shiftKey &&
-        !event.isComposing
-    ) {
+        if (
+            event.key === "Enter" &&
+            !event.shiftKey &&
+            !event.isComposing
+        ) {
 
-        event.preventDefault();
-
-        sendMessage();
-
+            event.preventDefault();
+            sendMessage();
+        }
     }
+);
 
-});
 
-
-messageInput.addEventListener("input", function () {
-
-    this.style.height = "auto";
-
-    this.style.height =
-        Math.min(this.scrollHeight, 130) + "px";
-
-});
+messageInput.addEventListener(
+    "input",
+    updateInputHeight
+);
 
 
 /* =========================================
    SUGGESTION BUTTONS
 ========================================= */
 
-document.querySelectorAll(".suggestion").forEach(button => {
+document.querySelectorAll(".suggestion")
+    .forEach(button => {
 
-    button.addEventListener("click", function () {
+        button.addEventListener(
+            "click",
+            function () {
 
-        messageInput.value = this.dataset.message;
+                messageInput.value =
+                    this.dataset.message || "";
 
-        sendMessage();
-
+                updateInputHeight();
+                sendMessage();
+            }
+        );
     });
-
-});
 
 
 /* =========================================
@@ -1296,57 +1646,159 @@ document.querySelectorAll(".suggestion").forEach(button => {
 ========================================= */
 
 document.getElementById("clearButton")
-    .addEventListener("click", function () {
+    .addEventListener(
+        "click",
+        function () {
 
-        if (!confirm("Clear this conversation?")) {
-            return;
+            if (!confirm("Clear this conversation?")) {
+                return;
+            }
+
+            messages.replaceChildren();
+
+            welcome.style.display = "block";
+
+            typingIndicator.hidden = true;
+
+            pendingRequests.clear();
+
+            messageInput.value = "";
+            messageInput.style.height = "auto";
+
+            showToast("Conversation cleared");
         }
-
-        messages.replaceChildren();
-
-        welcome.style.display = "block";
-
-        typingIndicator.hidden = true;
-
-        pendingRequests.clear();
-
-        messageInput.value = "";
-
-        showToast("Conversation cleared");
-
-    });
+    );
 
 
 /* =========================================
-   INITIALIZATION
+   PAGE INITIALIZATION
 ========================================= */
 
-document.addEventListener("DOMContentLoaded", function () {
+function initializeApp() {
 
     if (CONFIG.demoMode) {
-        setConnectionStatus(false, "Local preview mode");
-    }
-    else {
-        connectBackend();
+
+        setConnectionStatus(
+            false,
+            "Local preview mode"
+        );
+
+        return;
     }
 
-});
+    connectBackend();
+}
+
+
+if (document.readyState === "loading") {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeApp
+    );
+
+} else {
+
+    initializeApp();
+}
+
+
+/* =========================================
+   CLEANUP WHEN PAGE IS CLOSED
+========================================= */
+
+window.addEventListener(
+    "pagehide",
+    function () {
+
+        if (mediaRecorder &&
+            mediaRecorder.state === "recording") {
+
+            stopVoiceRecording(false);
+        }
+
+        if (voiceStream) {
+            voiceStream.getTracks().forEach(
+                track => track.stop()
+            );
+        }
+
+        if (socket &&
+            socket.readyState === WebSocket.OPEN) {
+
+            socket.close();
+        }
+    }
+);
 
 </script>
+
 
 <!-- PWA SERVICE WORKER -->
+
 <script>
 if ("serviceWorker" in navigator) {
-    window.addEventListener("load", async () => {
-        try {
-            const registration = await navigator.serviceWorker.register("./service-worker.js");
-            console.info("RK AI Service Worker registered:", registration.scope);
-        } catch (error) {
-            console.error("Service Worker registration failed:", error);
+
+    window.addEventListener(
+        "load",
+        async function () {
+
+            try {
+
+                const registration =
+                    await navigator.serviceWorker.register(
+                        "./service-worker.js"
+                    );
+
+                console.info(
+                    "RK AI Service Worker registered:",
+                    registration.scope
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Service Worker registration failed:",
+                    error
+                );
+            }
         }
-    });
+    );
 }
 </script>
+
+
+/* =========================================
+   PREVENT MOBILE PAGE ZOOM
+========================================= */
+
+// Prevent pinch-to-zoom gestures.
+document.addEventListener("gesturestart", function (event) {
+    event.preventDefault();
+}, { passive: false });
+
+document.addEventListener("gesturechange", function (event) {
+    event.preventDefault();
+}, { passive: false });
+
+document.addEventListener("gestureend", function (event) {
+    event.preventDefault();
+}, { passive: false });
+
+// Prevent double-tap zoom.
+let lastTouchEnd = 0;
+
+document.addEventListener("touchend", function (event) {
+
+    const now = Date.now();
+
+    if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+    }
+
+    lastTouchEnd = now;
+
+}, { passive: false });
 
 </body>
 </html>
