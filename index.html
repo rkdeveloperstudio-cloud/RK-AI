@@ -3,12 +3,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#101827">
-<meta name="description" content="RK AI Mobile Business Assistant">
-
 <link rel="manifest" href="./manifest.json">
-
+<meta name="description" content="RK AI Mobile Business Assistant">
 
 <title>RK AI Mobile Assistant</title>
 
@@ -560,12 +559,16 @@ button:disabled {
 const CONFIG = {
     // Replace this with your deployed Cloudflare Worker WebSocket URL.
     // Example: "wss://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev/ws"
-   websocketUrl: "wss://rkai-mobile-assistant.rkdeveloperstudio.workers.dev/ws",
+    websocketUrl: "wss://rkai-mobile-assistant.rkdeveloperstudio.workers.dev/ws",
 
-    // DEVELOPMENT ONLY: paste the MOBILE_TOKEN value from cloudflare/.dev.vars.
-    // This is intentionally hardcoded for your private test. Anyone who can
-    // inspect this HTML/JavaScript can read the token. Never publish this file.
-    mobileToken: "1b45eb76dbb603fcf7977245a57699f065851f1e2c23506e5d46458d48a0631b",
+    // DEVELOPMENT ONLY. Keep your existing test token here locally.
+    // Do not publish this file with a permanent token inside it.
+    mobileToken: "PASTE_YOUR_EXISTING_MOBILE_TOKEN_HERE",
+
+    // This route must be added to the Cloudflare Worker before voice
+    // transcription can work. It must accept multipart/form-data field "audio"
+    // and return JSON: { "text": "recognized words", "language": "ml" }.
+    transcriptionUrl: "https://rkai-mobile-assistant.rkdeveloperstudio.workers.dev/api/transcribe",
 
     demoMode: false
 };
@@ -998,103 +1001,244 @@ function showDemoResponse(message) {
 
 
 /* =========================================
-   VOICE INPUT
+   MULTILINGUAL VOICE INPUT
+   Audio is sent to the Worker transcription endpoint.
+   The transcription service must detect the spoken language automatically.
 ========================================= */
 
-const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
+let mediaRecorder = null;
+let voiceStream = null;
+let voiceChunks = [];
+let audioContext = null;
+let analyser = null;
+let silenceCheckTimer = null;
+let speechStarted = false;
+let lastSoundAt = 0;
+let voiceStopping = false;
 
-if (SpeechRecognition) {
+const VOICE_SETTINGS = {
+    silenceDurationMs: 1600,
+    speechThreshold: 0.018,
+    minimumRecordingMs: 500,
+    maximumRecordingMs: 60000
+};
 
-    recognition = new SpeechRecognition();
+let voiceStartedAt = 0;
+let maximumRecordingTimer = null;
 
-    recognition.lang = "en-US";
-    recognition.continuous = false;
-    recognition.interimResults = true;
-
-    recognition.onstart = function () {
-
-        micButton.classList.add("recording");
-
-        inputStatus.textContent = "Listening...";
-
-    };
-
-
-    recognition.onresult = function (event) {
-
-        let transcript = "";
-
-        for (
-            let i = event.resultIndex;
-            i < event.results.length;
-            i++
-        ) {
-
-            transcript +=
-                event.results[i][0].transcript;
-
-        }
-
-        messageInput.value = transcript;
-
-        messageInput.style.height = "auto";
-
-        messageInput.style.height =
-            Math.min(messageInput.scrollHeight, 130) + "px";
-
-    };
-
-
-    recognition.onerror = function (event) {
-
-        showToast(
-            "Voice input error: " + event.error
-        );
-
-    };
-
-
-    recognition.onend = function () {
-
-        micButton.classList.remove("recording");
-
-        inputStatus.textContent =
-            "Text and voice supported";
-
-    };
-
-}
-else {
-
-    micButton.disabled = true;
-
-    inputStatus.textContent =
-        "Voice recognition is not supported in this browser";
-
+function updateInputHeight() {
+    messageInput.style.height = "auto";
+    messageInput.style.height = Math.min(messageInput.scrollHeight, 130) + "px";
 }
 
-
-micButton.addEventListener("click", function () {
-
-    if (!recognition) {
+async function startVoiceRecording() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+        showToast("Audio recording is not supported in this browser. Please use a modern browser over HTTPS.");
         return;
     }
 
+    if (voiceStopping || mediaRecorder) return;
+
     try {
+        voiceStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+            }
+        });
 
-        recognition.start();
+        voiceChunks = [];
+        speechStarted = false;
+        voiceStopping = false;
+        voiceStartedAt = Date.now();
+        lastSoundAt = 0;
 
+        const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+            ? "audio/webm;codecs=opus"
+            : (MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "");
+
+        mediaRecorder = mimeType
+            ? new MediaRecorder(voiceStream, { mimeType })
+            : new MediaRecorder(voiceStream);
+
+        mediaRecorder.ondataavailable = event => {
+            if (event.data && event.data.size > 0) voiceChunks.push(event.data);
+        };
+
+        mediaRecorder.onerror = event => {
+            console.error("MediaRecorder error:", event.error || event);
+            showToast("Microphone recording failed.");
+            stopVoiceRecording(false);
+        };
+
+        mediaRecorder.onstop = async () => {
+            const recordedType = mediaRecorder ? mediaRecorder.mimeType : "audio/webm";
+            const audioBlob = new Blob(voiceChunks, { type: recordedType || "audio/webm" });
+            cleanupVoiceCapture();
+
+            if (audioBlob.size < 1500) {
+                showToast("No clear speech was detected. Please try again.");
+                return;
+            }
+
+            await transcribeAndSend(audioBlob);
+        };
+
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioContext.createMediaStreamSource(voiceStream);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 2048;
+        source.connect(analyser);
+
+        mediaRecorder.start(250);
+        micButton.classList.add("recording");
+        micButton.title = "Stop voice recording";
+        inputStatus.textContent = "Listening — speak now...";
+        showToast("Speak naturally. Your voice will send after you stop speaking.");
+
+        const samples = new Uint8Array(analyser.fftSize);
+        silenceCheckTimer = window.setInterval(() => {
+            if (!mediaRecorder || mediaRecorder.state !== "recording" || !analyser) return;
+
+            analyser.getByteTimeDomainData(samples);
+            let sum = 0;
+            for (let i = 0; i < samples.length; i++) {
+                const normalized = (samples[i] - 128) / 128;
+                sum += normalized * normalized;
+            }
+            const rms = Math.sqrt(sum / samples.length);
+            const now = Date.now();
+
+            if (rms >= VOICE_SETTINGS.speechThreshold) {
+                speechStarted = true;
+                lastSoundAt = now;
+                inputStatus.textContent = "Speech detected...";
+            }
+
+            if (speechStarted && now - lastSoundAt >= VOICE_SETTINGS.silenceDurationMs) {
+                stopVoiceRecording(true);
+            }
+        }, 150);
+
+        maximumRecordingTimer = window.setTimeout(() => {
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                stopVoiceRecording(true);
+            }
+        }, VOICE_SETTINGS.maximumRecordingMs);
+
+    } catch (error) {
+        console.error("Could not start microphone:", error);
+        cleanupVoiceCapture();
+        showToast(error && error.name === "NotAllowedError"
+            ? "Microphone permission was denied. Allow microphone access in your browser."
+            : "Unable to start microphone. Check browser permissions and try again.");
     }
-    catch (error) {
+}
 
-        showToast("Voice recognition is already active");
+function stopVoiceRecording(shouldTranscribe) {
+    if (!mediaRecorder || mediaRecorder.state === "inactive") return;
+    voiceStopping = true;
+    if (silenceCheckTimer) {
+        clearInterval(silenceCheckTimer);
+        silenceCheckTimer = null;
+    }
+    if (maximumRecordingTimer) {
+        clearTimeout(maximumRecordingTimer);
+        maximumRecordingTimer = null;
+    }
+    if (!shouldTranscribe) {
+        voiceChunks = [];
+        mediaRecorder.onstop = () => cleanupVoiceCapture();
+    }
+    try {
+        mediaRecorder.stop();
+    } catch (error) {
+        console.error("Could not stop voice recording:", error);
+        cleanupVoiceCapture();
+    }
+}
 
+function cleanupVoiceCapture() {
+    if (silenceCheckTimer) clearInterval(silenceCheckTimer);
+    if (maximumRecordingTimer) clearTimeout(maximumRecordingTimer);
+    silenceCheckTimer = null;
+    maximumRecordingTimer = null;
+
+    if (voiceStream) {
+        voiceStream.getTracks().forEach(track => track.stop());
+        voiceStream = null;
+    }
+    if (audioContext) {
+        audioContext.close().catch(() => {});
+        audioContext = null;
     }
 
+    mediaRecorder = null;
+    analyser = null;
+    voiceStopping = false;
+    micButton.classList.remove("recording");
+    micButton.title = "Voice input";
+    inputStatus.textContent = "Text and multilingual voice supported";
+}
+
+async function transcribeAndSend(audioBlob) {
+    if (!CONFIG.transcriptionUrl || !CONFIG.mobileToken ||
+        CONFIG.mobileToken === "PASTE_YOUR_EXISTING_MOBILE_TOKEN_HERE") {
+        showToast("Set the existing test token and transcription endpoint in CONFIG first.");
+        return;
+    }
+
+    inputStatus.textContent = "Detecting language and transcribing...";
+    micButton.disabled = true;
+
+    try {
+        const formData = new FormData();
+        const extension = audioBlob.type.includes("mp4") ? "m4a" : "webm";
+        formData.append("audio", audioBlob, "voice." + extension);
+
+        const response = await fetch(CONFIG.transcriptionUrl, {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + CONFIG.mobileToken
+            },
+            body: formData
+        });
+
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(result.message || "Transcription service returned HTTP " + response.status);
+        }
+
+        const transcript = String(result.text || result.transcript || "").trim();
+        if (!transcript) {
+            throw new Error("No speech could be recognized. Please try again.");
+        }
+
+        // Show the detected transcript, then use the existing text-message flow.
+        messageInput.value = transcript;
+        updateInputHeight();
+        if (result.language) {
+            console.info("Detected speech language:", result.language);
+        }
+        sendMessage();
+
+    } catch (error) {
+        console.error("Voice transcription failed:", error);
+        showToast(error.message || "Voice transcription failed. Please try again.");
+    } finally {
+        micButton.disabled = false;
+        inputStatus.textContent = "Text and multilingual voice supported";
+    }
+}
+
+micButton.addEventListener("click", function () {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+        stopVoiceRecording(true);
+    } else {
+        startVoiceRecording();
+    }
 });
-
 
 /* =========================================
    BUTTON EVENTS
@@ -1190,37 +1334,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
 </script>
 
-
-
+<!-- PWA SERVICE WORKER -->
 <script>
 if ("serviceWorker" in navigator) {
-
     window.addEventListener("load", async () => {
-
         try {
-
-            const registration =
-                await navigator.serviceWorker.register(
-                    "./service-worker.js"
-                );
-
-            console.log(
-                "RK AI Service Worker registered:",
-                registration.scope
-            );
-
+            const registration = await navigator.serviceWorker.register("./service-worker.js");
+            console.info("RK AI Service Worker registered:", registration.scope);
         } catch (error) {
-
-            console.error(
-                "Service Worker registration failed:",
-                error
-            );
-
+            console.error("Service Worker registration failed:", error);
         }
-
     });
-
 }
 </script>
+
 </body>
 </html>
