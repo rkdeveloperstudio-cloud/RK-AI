@@ -25,6 +25,12 @@
     --primary-hover: #3972ed;
     --success: #22c58b;
     --danger: #f87171;
+
+    /* Safe-area insets (notch / home indicator) */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
 }
 
 * {
@@ -38,6 +44,7 @@ body {
     width: 100%;
     height: 100%;
     overflow: hidden;
+    -webkit-text-size-adjust: 100%;
 }
 
 html {
@@ -56,6 +63,7 @@ button,
 textarea,
 select {
     font-family: inherit;
+    font-size: inherit;
 }
 
 button,
@@ -71,22 +79,26 @@ button {
     width: 100%;
     max-width: 950px;
     height: 100%;
-    margin: auto;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
     background: var(--bg);
     min-width: 0;
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
 }
 
-/* HEADER */
+/* ---------------- HEADER ---------------- */
 
 .header {
-    flex-shrink: 0;
-    min-height: 76px;
-    padding: 12px 18px;
+    flex: 0 0 auto;
+    min-height: 68px;
+    padding: 10px 14px;
+    padding-top: calc(10px + var(--safe-top));
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 10px;
     background: var(--panel);
     border-bottom: 1px solid var(--border);
 }
@@ -94,42 +106,55 @@ button {
 .brand {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     min-width: 0;
+    flex: 1 1 auto;
 }
 
 .logo {
-    width: 46px;
-    height: 46px;
-    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
     background: var(--primary);
-    border-radius: 14px;
+    border-radius: 12px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 19px;
+    font-size: 17px;
     font-weight: 800;
-    color: white;
+    color: #fff;
+}
+
+.brand-text {
+    min-width: 0;
+    overflow: hidden;
 }
 
 .brand h1 {
-    font-size: 17px;
+    font-size: 15px;
     font-weight: 650;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .connection {
     color: var(--muted);
-    font-size: 12px;
-    margin-top: 5px;
+    font-size: 11px;
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .dot {
     display: inline-block;
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     margin-right: 5px;
     background: var(--danger);
+    vertical-align: middle;
 }
 
 .dot.online {
@@ -138,76 +163,87 @@ button {
 
 .header-actions {
     display: flex;
-    gap: 8px;
+    gap: 6px;
+    flex: 0 0 auto;
 }
 
 .icon-button {
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 11px;
     background: var(--panel2);
     color: var(--text);
-    font-size: 19px;
+    font-size: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* CHAT */
+/* ---------------- CHAT ---------------- */
 
 .chat-area {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 24px 18px;
+    padding: 18px 14px;
     scroll-behavior: smooth;
     overscroll-behavior: contain;
+    min-width: 0;
 }
 
 .welcome {
     max-width: 520px;
-    margin: 50px auto 30px;
+    margin: 32px auto 24px;
     text-align: center;
+    padding: 0 4px;
 }
 
 .welcome-logo {
-    width: 70px;
-    height: 70px;
-    border-radius: 20px;
+    width: 62px;
+    height: 62px;
+    border-radius: 18px;
     background: var(--primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: auto auto 20px;
-    font-size: 25px;
+    margin: 0 auto 16px;
+    font-size: 22px;
     font-weight: 800;
+    color: #fff;
 }
 
 .welcome h2 {
-    font-size: 24px;
-    margin-bottom: 12px;
+    font-size: 21px;
+    margin-bottom: 10px;
+    line-height: 1.25;
 }
 
 .welcome p {
     color: var(--muted);
-    font-size: 14px;
-    line-height: 1.7;
+    font-size: 13.5px;
+    line-height: 1.6;
 }
 
 .suggestions {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    margin-top: 25px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 22px;
 }
 
 .suggestion {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 14px 10px;
+    padding: 12px 10px;
     color: var(--text);
-    font-size: 13px;
+    font-size: 12.5px;
+    line-height: 1.35;
     text-align: left;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .suggestion:hover {
@@ -215,11 +251,12 @@ button {
     background: var(--panel2);
 }
 
-/* MESSAGES */
+/* ---------------- MESSAGES ---------------- */
 
 .message-row {
     display: flex;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+    min-width: 0;
 }
 
 .message-row.user {
@@ -231,18 +268,20 @@ button {
 }
 
 .message-bubble {
-    max-width: 85%;
-    padding: 14px 16px;
+    max-width: 88%;
+    padding: 12px 14px;
     border-radius: 16px;
     font-size: 14px;
-    line-height: 1.65;
+    line-height: 1.6;
     overflow-wrap: anywhere;
+    word-break: break-word;
     white-space: pre-wrap;
+    min-width: 0;
 }
 
 .user .message-bubble {
     background: var(--primary);
-    color: white;
+    color: #fff;
     border-bottom-right-radius: 4px;
 }
 
@@ -255,7 +294,7 @@ button {
 
 .message-time {
     display: block;
-    margin-top: 7px;
+    margin-top: 6px;
     font-size: 10px;
     opacity: 0.65;
     text-align: right;
@@ -264,38 +303,41 @@ button {
 .message-label {
     font-size: 11px;
     color: var(--muted);
-    margin-bottom: 5px;
+    margin-bottom: 4px;
 }
 
 .typing {
     color: var(--muted);
     font-size: 13px;
-    padding: 12px;
+    padding: 10px 4px;
 }
 
-/* INPUT */
+/* ---------------- INPUT ---------------- */
 
 .input-section {
-    flex-shrink: 0;
-    padding: 14px 16px 10px;
+    flex: 0 0 auto;
+    padding: 10px 12px;
+    padding-bottom: calc(10px + var(--safe-bottom));
     background: var(--panel);
     border-top: 1px solid var(--border);
+    min-width: 0;
 }
 
 .input-container {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    align-items: flex-end;
+    gap: 6px;
     width: 100%;
     min-width: 0;
     background: var(--panel2);
     border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 8px;
+    padding: 6px;
 }
 
 .input-container textarea {
     flex: 1 1 0;
+    /* Crucial for flexbox: allow the textarea to shrink. */
     width: 0;
     min-width: 0;
     max-height: 130px;
@@ -304,48 +346,37 @@ button {
     border: none;
     outline: none;
     color: var(--text);
-    padding: 10px 7px;
-    font-size: 14px;
-    line-height: 1.5;
+    padding: 9px 6px;
+    font-size: 15px;
+    line-height: 1.45;
 }
 
 .input-container textarea::placeholder {
     color: var(--muted);
 }
 
-/* VOICE LANGUAGE SELECTOR */
+/* ---------------- VOICE LANGUAGE SELECTOR ---------------- */
 
 #voiceLanguage {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-
-    flex: 0 0 105px;
-    width: 105px;
-    min-width: 105px;
-    max-width: 105px;
-
-    height: 43px;
-    min-height: 43px;
-
-    padding: 0 7px;
+    display: block;
+    flex: 0 0 auto;
+    /* Never wider than 30% of the row, never narrower than 64px. */
+    width: auto;
+    min-width: 64px;
+    max-width: 30%;
+    height: 40px;
+    padding: 0 4px;
     margin: 0;
-
-    color: #edf3fb;
-    background-color: #202e43;
-
+    color: var(--text);
+    background-color: var(--panel2);
     border: 1px solid #475569;
     border-radius: 10px;
-
-    font-family: inherit;
     font-size: 12px;
-
     appearance: auto;
     -webkit-appearance: menulist;
-
     outline: none;
     cursor: pointer;
-    flex-shrink: 0;
+    text-overflow: ellipsis;
 }
 
 #voiceLanguage:focus {
@@ -353,26 +384,30 @@ button {
 }
 
 #voiceLanguage option {
-    color: #edf3fb;
-    background-color: #202e43;
+    color: var(--text);
+    background-color: var(--panel2);
 }
 
-/* BUTTONS */
+/* ---------------- BUTTONS ---------------- */
 
 .send-button,
 .mic-button {
-    width: 43px;
-    height: 43px;
-    min-width: 43px;
-    flex: 0 0 43px;
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
     border: none;
     border-radius: 12px;
-    font-size: 19px;
+    font-size: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
 }
 
 .send-button {
     background: var(--primary);
-    color: white;
+    color: #fff;
 }
 
 .send-button:hover {
@@ -386,7 +421,7 @@ button {
 
 .mic-button.recording {
     background: var(--danger);
-    color: white;
+    color: #fff;
     animation: pulse 1s infinite;
 }
 
@@ -397,113 +432,326 @@ select:disabled {
 }
 
 @keyframes pulse {
-    50% {
-        opacity: 0.55;
-    }
+    50% { opacity: 0.55; }
 }
 
-/* FOOTER */
+/* ---------------- FOOTER ---------------- */
 
 .input-footer {
     display: flex;
     justify-content: space-between;
-    gap: 10px;
-    margin-top: 10px;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
     color: var(--muted);
     font-size: 10px;
+    line-height: 1.3;
+    min-width: 0;
 }
 
-/* NOTIFICATION */
+.input-footer span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------------- TOAST ---------------- */
 
 .toast {
     position: fixed;
     left: 50%;
-    bottom: 95px;
+    bottom: calc(80px + var(--safe-bottom));
     transform: translateX(-50%);
     background: #26374e;
-    color: white;
+    color: #fff;
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 11px 16px;
+    padding: 10px 14px;
     font-size: 13px;
     display: none;
     z-index: 10000;
-    max-width: 90%;
+    width: max-content;
+    max-width: min(90vw, 480px);
     text-align: center;
+    overflow-wrap: anywhere;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
 }
 
 .toast.show {
     display: block;
 }
 
-/* MOBILE */
+/* ---------------- SMALL PHONES (≤ 420px) ---------------- */
 
-@media (max-width: 600px) {
-
+@media (max-width: 420px) {
     .header {
-        min-height: 68px;
-        padding: 10px 13px;
+        padding: 8px 10px;
+        padding-top: calc(8px + var(--safe-top));
+        min-height: 60px;
+    }
+
+    .logo {
+        width: 38px;
+        height: 38px;
+        flex-basis: 38px;
+        font-size: 15px;
+        border-radius: 10px;
     }
 
     .brand h1 {
-        font-size: 15px;
+        font-size: 14px;
+    }
+
+    .connection {
+        font-size: 10px;
+    }
+
+    .icon-button {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
     }
 
     .chat-area {
-        padding: 18px 12px;
-    }
-
-    .welcome {
-        margin-top: 35px;
+        padding: 14px 10px;
     }
 
     .welcome h2 {
-        font-size: 21px;
+        font-size: 19px;
+    }
+
+    .welcome p {
+        font-size: 13px;
     }
 
     .suggestions {
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-    }
-
-    .suggestion {
-        font-size: 12px;
-        padding: 12px 9px;
+        grid-template-columns: 1fr;
+        gap: 7px;
     }
 
     .message-bubble {
-        max-width: 90%;
+        max-width: 92%;
         font-size: 14px;
     }
 
     .input-section {
-        padding: 10px;
+        padding: 8px 8px;
+        padding-bottom: calc(8px + var(--safe-bottom));
     }
 
     .input-container {
-        gap: 5px;
-        padding: 6px;
+        gap: 4px;
+        padding: 5px;
+        border-radius: 14px;
+    }
+
+    .input-container textarea {
+        padding: 8px 5px;
+        font-size: 15px;
     }
 
     #voiceLanguage {
-        flex: 0 0 88px;
-        width: 88px;
-        min-width: 88px;
-        max-width: 88px;
+        min-width: 58px;
+        max-width: 26%;
+        height: 38px;
         font-size: 11px;
-        padding: 0 4px;
+        padding: 0 3px;
     }
 
     .send-button,
     .mic-button {
-        width: 40px;
-        min-width: 40px;
-        flex: 0 0 40px;
-        height: 43px;
+        flex: 0 0 38px;
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+        border-radius: 11px;
+        font-size: 17px;
     }
 
     .input-footer {
         font-size: 9px;
+    }
+
+    .toast {
+        bottom: calc(72px + var(--safe-bottom));
+        font-size: 12px;
+        padding: 9px 12px;
+    }
+}
+
+/* ---------------- VERY SMALL PHONES (≤ 340px) ---------------- */
+
+@media (max-width: 340px) {
+    .input-container {
+        flex-wrap: wrap;
+    }
+
+    .input-container textarea {
+        flex: 1 1 100%;
+        width: 100%;
+        min-height: 40px;
+        padding: 8px 6px;
+    }
+
+    #voiceLanguage {
+        flex: 1 1 auto;
+        max-width: none;
+        min-width: 0;
+        height: 36px;
+    }
+
+    .send-button,
+    .mic-button {
+        flex: 0 0 36px;
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+    }
+
+    .input-footer span:last-child {
+        display: none;
+    }
+}
+
+/* ---------------- LANDSCAPE PHONE ---------------- */
+
+@media (max-height: 480px) and (orientation: landscape) {
+    .welcome {
+        margin: 16px auto 14px;
+    }
+
+    .welcome-logo {
+        width: 48px;
+        height: 48px;
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+
+    .welcome h2 {
+        font-size: 18px;
+        margin-bottom: 6px;
+    }
+
+    .welcome p {
+        font-size: 12.5px;
+    }
+
+    .suggestions {
+        margin-top: 14px;
+    }
+
+    .chat-area {
+        padding: 12px 12px;
+    }
+
+    .header {
+        min-height: 54px;
+    }
+}
+
+/* ---------------- TABLET / DESKTOP (≥ 700px) ---------------- */
+
+@media (min-width: 700px) {
+    .header {
+        padding: 12px 20px;
+        padding-top: calc(12px + var(--safe-top));
+        min-height: 74px;
+    }
+
+    .logo {
+        width: 46px;
+        height: 46px;
+        flex-basis: 46px;
+        font-size: 19px;
+        border-radius: 14px;
+    }
+
+    .brand h1 {
+        font-size: 17px;
+    }
+
+    .connection {
+        font-size: 12px;
+    }
+
+    .chat-area {
+        padding: 24px 20px;
+    }
+
+    .welcome {
+        margin-top: 50px;
+    }
+
+    .welcome h2 {
+        font-size: 24px;
+    }
+
+    .welcome p {
+        font-size: 14px;
+    }
+
+    .suggestions {
+        gap: 10px;
+        margin-top: 25px;
+    }
+
+    .suggestion {
+        padding: 14px 12px;
+        font-size: 13px;
+    }
+
+    .message-bubble {
+        max-width: 75%;
+        font-size: 14.5px;
+    }
+
+    .input-section {
+        padding: 14px 20px;
+        padding-bottom: calc(10px + var(--safe-bottom));
+    }
+
+    .input-container {
+        gap: 8px;
+        padding: 8px;
+    }
+
+    .input-container textarea {
+        padding: 10px 8px;
+        font-size: 15px;
+    }
+
+    #voiceLanguage {
+        min-width: 92px;
+        max-width: 140px;
+        height: 42px;
+        font-size: 12.5px;
+        padding: 0 6px;
+    }
+
+    .send-button,
+    .mic-button {
+        flex: 0 0 42px;
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
+        border-radius: 12px;
+        font-size: 19px;
+    }
+
+    .input-footer {
+        font-size: 10.5px;
+    }
+}
+
+/* ---------------- REDUCED MOTION ---------------- */
+
+@media (prefers-reduced-motion: reduce) {
+    .chat-area {
+        scroll-behavior: auto;
+    }
+    .mic-button.recording {
+        animation: none;
     }
 }
 </style>
@@ -514,13 +762,10 @@ select:disabled {
 <div class="app">
 
     <header class="header">
-
         <div class="brand">
             <div class="logo">RK</div>
-
-            <div>
+            <div class="brand-text">
                 <h1>RK AI Assistant</h1>
-
                 <div class="connection" id="connectionStatus">
                     <span class="dot"></span>
                     Backend not connected
@@ -532,21 +777,14 @@ select:disabled {
             <button class="icon-button"
                     id="clearButton"
                     title="Clear chat"
-                    aria-label="Clear chat">
-                ↻
-            </button>
+                    aria-label="Clear chat">↻</button>
         </div>
-
     </header>
 
     <main class="chat-area" id="chatArea">
-
         <section class="welcome" id="welcome">
-
             <div class="welcome-logo">RK</div>
-
             <h2>Welcome to RK AI</h2>
-
             <p>
                 Your mobile business assistant.
                 Ask questions about sales, purchases,
@@ -554,29 +792,11 @@ select:disabled {
             </p>
 
             <div class="suggestions">
-
-                <button class="suggestion"
-                        data-message="Check my today's total sales">
-                    Today's total sales
-                </button>
-
-                <button class="suggestion"
-                        data-message="Show my current stock summary">
-                    Current stock summary
-                </button>
-
-                <button class="suggestion"
-                        data-message="Show my top selling products">
-                    Top selling products
-                </button>
-
-                <button class="suggestion"
-                        data-message="Show my purchase summary">
-                    Purchase summary
-                </button>
-
+                <button class="suggestion" data-message="Check my today's total sales">Today's total sales</button>
+                <button class="suggestion" data-message="Show my current stock summary">Current stock summary</button>
+                <button class="suggestion" data-message="Show my top selling products">Top selling products</button>
+                <button class="suggestion" data-message="Show my purchase summary">Purchase summary</button>
             </div>
-
         </section>
 
         <div id="messages"></div>
@@ -584,13 +804,10 @@ select:disabled {
         <div id="typingIndicator" class="typing" hidden>
             RK AI is processing...
         </div>
-
     </main>
 
     <footer class="input-section">
-
         <div class="input-container">
-
             <textarea
                 id="messageInput"
                 placeholder="Ask your business assistant..."
@@ -601,39 +818,28 @@ select:disabled {
             <select id="voiceLanguage"
                     aria-label="Voice transcription language"
                     title="Voice language">
-
                 <option value="">Auto</option>
                 <option value="en">English</option>
                 <option value="ml">മലയാളം</option>
                 <option value="ar">العربية</option>
                 <option value="hi">हिन्दी</option>
-
             </select>
 
             <button class="mic-button"
                     id="micButton"
                     title="Start voice recording"
-                    aria-label="Start voice recording">
-                🎤
-            </button>
+                    aria-label="Start voice recording">🎤</button>
 
             <button class="send-button"
                     id="sendButton"
                     title="Send message"
-                    aria-label="Send message">
-                ➤
-            </button>
-
+                    aria-label="Send message">➤</button>
         </div>
 
         <div class="input-footer">
-            <span id="inputStatus">
-                Text and multilingual voice supported
-            </span>
-
+            <span id="inputStatus">Text and multilingual voice supported</span>
             <span>RK Developer Studio</span>
         </div>
-
     </footer>
 
 </div>
@@ -642,7 +848,6 @@ select:disabled {
      id="toast"
      role="status"
      aria-live="polite"></div>
-
 <script>
 "use strict";
 
