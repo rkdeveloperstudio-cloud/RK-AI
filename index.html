@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 
+<!-- iOS will ignore user-scalable=no in modern versions;
+     the font-size fix is what really prevents zoom. -->
 <meta name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
@@ -26,11 +28,14 @@
     --success: #22c58b;
     --danger: #f87171;
 
-    /* Safe-area insets (notch / home indicator) */
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --safe-left: env(safe-area-inset-left, 0px);
     --safe-right: env(safe-area-inset-right, 0px);
+
+    /* iOS Safari auto-zooms on focus if input font-size < 16px.
+       We define it here so every focusable control uses it. */
+    --input-font-size: 16px;
 }
 
 * {
@@ -45,6 +50,7 @@ body {
     height: 100%;
     overflow: hidden;
     -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 
 html {
@@ -57,13 +63,16 @@ body {
     color: var(--text);
     height: 100vh;
     height: 100dvh;
+    overscroll-behavior: none;
 }
 
 button,
 textarea,
-select {
+select,
+input {
     font-family: inherit;
-    font-size: inherit;
+    /* HARD REQUIREMENT: never drop below 16px on iOS. */
+    font-size: var(--input-font-size);
 }
 
 button,
@@ -239,7 +248,7 @@ button {
     border-radius: 12px;
     padding: 12px 10px;
     color: var(--text);
-    font-size: 12.5px;
+    font-size: 13px;
     line-height: 1.35;
     text-align: left;
     min-width: 0;
@@ -337,7 +346,6 @@ button {
 
 .input-container textarea {
     flex: 1 1 0;
-    /* Crucial for flexbox: allow the textarea to shrink. */
     width: 0;
     min-width: 0;
     max-height: 130px;
@@ -347,12 +355,14 @@ button {
     outline: none;
     color: var(--text);
     padding: 9px 6px;
-    font-size: 15px;
+    /* >= 16px is what stops iOS auto-zoom. */
+    font-size: var(--input-font-size);
     line-height: 1.45;
 }
 
 .input-container textarea::placeholder {
     color: var(--muted);
+    font-size: var(--input-font-size);
 }
 
 /* ---------------- VOICE LANGUAGE SELECTOR ---------------- */
@@ -360,7 +370,6 @@ button {
 #voiceLanguage {
     display: block;
     flex: 0 0 auto;
-    /* Never wider than 30% of the row, never narrower than 64px. */
     width: auto;
     min-width: 64px;
     max-width: 30%;
@@ -371,7 +380,8 @@ button {
     background-color: var(--panel2);
     border: 1px solid #475569;
     border-radius: 10px;
-    font-size: 12px;
+    /* >= 16px prevents iOS zoom when this control is tapped. */
+    font-size: var(--input-font-size);
     appearance: auto;
     -webkit-appearance: menulist;
     outline: none;
@@ -386,6 +396,7 @@ button {
 #voiceLanguage option {
     color: var(--text);
     background-color: var(--panel2);
+    font-size: var(--input-font-size);
 }
 
 /* ---------------- BUTTONS ---------------- */
@@ -482,7 +493,9 @@ select:disabled {
     display: block;
 }
 
-/* ---------------- SMALL PHONES (≤ 420px) ---------------- */
+/* ---------------- SMALL PHONES (≤ 420px) ----------------
+   CRITICAL: do NOT reduce font-size of textarea or select here.
+   iOS zoom is triggered by computed font-size at focus time. */
 
 @media (max-width: 420px) {
     .header {
@@ -499,13 +512,8 @@ select:disabled {
         border-radius: 10px;
     }
 
-    .brand h1 {
-        font-size: 14px;
-    }
-
-    .connection {
-        font-size: 10px;
-    }
+    .brand h1 { font-size: 14px; }
+    .connection { font-size: 10px; }
 
     .icon-button {
         width: 36px;
@@ -513,17 +521,10 @@ select:disabled {
         font-size: 16px;
     }
 
-    .chat-area {
-        padding: 14px 10px;
-    }
+    .chat-area { padding: 14px 10px; }
 
-    .welcome h2 {
-        font-size: 19px;
-    }
-
-    .welcome p {
-        font-size: 13px;
-    }
+    .welcome h2 { font-size: 19px; }
+    .welcome p { font-size: 13px; }
 
     .suggestions {
         grid-template-columns: 1fr;
@@ -536,7 +537,7 @@ select:disabled {
     }
 
     .input-section {
-        padding: 8px 8px;
+        padding: 8px;
         padding-bottom: calc(8px + var(--safe-bottom));
     }
 
@@ -548,14 +549,16 @@ select:disabled {
 
     .input-container textarea {
         padding: 8px 5px;
-        font-size: 15px;
+        /* Keep 16px — do not shrink. */
+        font-size: var(--input-font-size);
     }
 
     #voiceLanguage {
         min-width: 58px;
         max-width: 26%;
         height: 38px;
-        font-size: 11px;
+        /* Keep 16px — do not shrink. */
+        font-size: var(--input-font-size);
         padding: 0 3px;
     }
 
@@ -569,9 +572,7 @@ select:disabled {
         font-size: 17px;
     }
 
-    .input-footer {
-        font-size: 9px;
-    }
+    .input-footer { font-size: 9px; }
 
     .toast {
         bottom: calc(72px + var(--safe-bottom));
@@ -583,14 +584,12 @@ select:disabled {
 /* ---------------- VERY SMALL PHONES (≤ 340px) ---------------- */
 
 @media (max-width: 340px) {
-    .input-container {
-        flex-wrap: wrap;
-    }
+    .input-container { flex-wrap: wrap; }
 
     .input-container textarea {
         flex: 1 1 100%;
         width: 100%;
-        min-height: 40px;
+        min-height: 42px;
         padding: 8px 6px;
     }
 
@@ -598,7 +597,7 @@ select:disabled {
         flex: 1 1 auto;
         max-width: none;
         min-width: 0;
-        height: 36px;
+        height: 38px;
     }
 
     .send-button,
@@ -609,45 +608,19 @@ select:disabled {
         min-width: 36px;
     }
 
-    .input-footer span:last-child {
-        display: none;
-    }
+    .input-footer span:last-child { display: none; }
 }
 
 /* ---------------- LANDSCAPE PHONE ---------------- */
 
 @media (max-height: 480px) and (orientation: landscape) {
-    .welcome {
-        margin: 16px auto 14px;
-    }
-
-    .welcome-logo {
-        width: 48px;
-        height: 48px;
-        font-size: 18px;
-        margin-bottom: 10px;
-    }
-
-    .welcome h2 {
-        font-size: 18px;
-        margin-bottom: 6px;
-    }
-
-    .welcome p {
-        font-size: 12.5px;
-    }
-
-    .suggestions {
-        margin-top: 14px;
-    }
-
-    .chat-area {
-        padding: 12px 12px;
-    }
-
-    .header {
-        min-height: 54px;
-    }
+    .welcome { margin: 16px auto 14px; }
+    .welcome-logo { width: 48px; height: 48px; font-size: 18px; margin-bottom: 10px; }
+    .welcome h2 { font-size: 18px; margin-bottom: 6px; }
+    .welcome p { font-size: 12.5px; }
+    .suggestions { margin-top: 14px; }
+    .chat-area { padding: 12px 12px; }
+    .header { min-height: 54px; }
 }
 
 /* ---------------- TABLET / DESKTOP (≥ 700px) ---------------- */
@@ -667,57 +640,28 @@ select:disabled {
         border-radius: 14px;
     }
 
-    .brand h1 {
-        font-size: 17px;
-    }
+    .brand h1 { font-size: 17px; }
+    .connection { font-size: 12px; }
 
-    .connection {
-        font-size: 12px;
-    }
+    .chat-area { padding: 24px 20px; }
+    .welcome { margin-top: 50px; }
+    .welcome h2 { font-size: 24px; }
+    .welcome p { font-size: 14px; }
+    .suggestions { gap: 10px; margin-top: 25px; }
+    .suggestion { padding: 14px 12px; font-size: 13px; }
 
-    .chat-area {
-        padding: 24px 20px;
-    }
-
-    .welcome {
-        margin-top: 50px;
-    }
-
-    .welcome h2 {
-        font-size: 24px;
-    }
-
-    .welcome p {
-        font-size: 14px;
-    }
-
-    .suggestions {
-        gap: 10px;
-        margin-top: 25px;
-    }
-
-    .suggestion {
-        padding: 14px 12px;
-        font-size: 13px;
-    }
-
-    .message-bubble {
-        max-width: 75%;
-        font-size: 14.5px;
-    }
+    .message-bubble { max-width: 75%; font-size: 14.5px; }
 
     .input-section {
         padding: 14px 20px;
         padding-bottom: calc(10px + var(--safe-bottom));
     }
 
-    .input-container {
-        gap: 8px;
-        padding: 8px;
-    }
+    .input-container { gap: 8px; padding: 8px; }
 
     .input-container textarea {
         padding: 10px 8px;
+        /* On desktop zoom doesn't apply, but keep consistent. */
         font-size: 15px;
     }
 
@@ -725,7 +669,7 @@ select:disabled {
         min-width: 92px;
         max-width: 140px;
         height: 42px;
-        font-size: 12.5px;
+        font-size: 14px;
         padding: 0 6px;
     }
 
@@ -739,20 +683,12 @@ select:disabled {
         font-size: 19px;
     }
 
-    .input-footer {
-        font-size: 10.5px;
-    }
+    .input-footer { font-size: 10.5px; }
 }
 
-/* ---------------- REDUCED MOTION ---------------- */
-
 @media (prefers-reduced-motion: reduce) {
-    .chat-area {
-        scroll-behavior: auto;
-    }
-    .mic-button.recording {
-        animation: none;
-    }
+    .chat-area { scroll-behavior: auto; }
+    .mic-button.recording { animation: none; }
 }
 </style>
 </head>
@@ -828,7 +764,7 @@ select:disabled {
             <button class="mic-button"
                     id="micButton"
                     title="Start voice recording"
-                    aria-label="Start voice recording">🎤</button>
+                    aria-label="Start voice recording">🎙️</button>
 
             <button class="send-button"
                     id="sendButton"
@@ -848,7 +784,7 @@ select:disabled {
      id="toast"
      role="status"
      aria-live="polite"></div>
-<script>
+      <script>
 "use strict";
 
 /* =========================================
