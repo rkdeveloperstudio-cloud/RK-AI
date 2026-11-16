@@ -7,6 +7,7 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#101827">
 <meta name="description" content="RK AI Mobile Business Assistant">
+
 <link rel="manifest" href="./manifest.json">
 
 <title>RK AI Mobile Assistant</title>
@@ -31,6 +32,13 @@
     padding: 0;
 }
 
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
 body {
     font-family: "Segoe UI", Arial, sans-serif;
     background: var(--bg);
@@ -39,7 +47,9 @@ body {
     height: 100dvh;
 }
 
-button, textarea {
+button,
+textarea,
+select {
     font-family: inherit;
 }
 
@@ -132,6 +142,7 @@ button {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 24px 18px;
     scroll-behavior: smooth;
 }
@@ -312,13 +323,33 @@ button {
     animation: pulse 1s infinite;
 }
 
-button:disabled {
+button:disabled,
+select:disabled {
     opacity: 0.45;
     cursor: not-allowed;
 }
 
 @keyframes pulse {
-    50% { opacity: 0.55; }
+    50% {
+        opacity: 0.55;
+    }
+}
+
+#voiceLanguage {
+    height: 43px;
+    max-width: 105px;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--panel);
+    color: var(--text);
+    padding: 0 7px;
+    font-size: 12px;
+    outline: none;
+}
+
+#voiceLanguage:focus {
+    border-color: var(--primary);
 }
 
 .input-footer {
@@ -395,6 +426,21 @@ button:disabled {
     .input-section {
         padding: 10px;
     }
+
+    .input-container {
+        gap: 6px;
+    }
+
+    #voiceLanguage {
+        max-width: 88px;
+        font-size: 11px;
+    }
+
+    .send-button,
+    .mic-button {
+        width: 40px;
+        height: 43px;
+    }
 }
 </style>
 </head>
@@ -404,31 +450,39 @@ button:disabled {
 <div class="app">
 
     <header class="header">
+
         <div class="brand">
+
             <div class="logo">RK</div>
 
             <div>
                 <h1>RK AI Assistant</h1>
+
                 <div class="connection" id="connectionStatus">
                     <span class="dot"></span>
                     Backend not connected
                 </div>
             </div>
+
         </div>
 
         <div class="header-actions">
+
             <button class="icon-button"
                     id="clearButton"
                     title="Clear chat"
                     aria-label="Clear chat">
                 ↻
             </button>
+
         </div>
+
     </header>
 
     <main class="chat-area" id="chatArea">
 
         <section class="welcome" id="welcome">
+
             <div class="welcome-logo">RK</div>
 
             <h2>Welcome to RK AI</h2>
@@ -440,6 +494,7 @@ button:disabled {
             </p>
 
             <div class="suggestions">
+
                 <button class="suggestion"
                     data-message="Check my today's total sales">
                     Today's total sales
@@ -459,7 +514,9 @@ button:disabled {
                     data-message="Show my purchase summary">
                     Purchase summary
                 </button>
+
             </div>
+
         </section>
 
         <div id="messages"></div>
@@ -484,6 +541,17 @@ button:disabled {
                 aria-label="Message">
             </textarea>
 
+            <select id="voiceLanguage"
+                    aria-label="Voice transcription language"
+                    title="Voice language">
+
+                <option value="">Auto</option>
+                <option value="en">EN</option>
+                <option value="ml">മലയാളം</option>
+                <option value="ar">العربية</option>
+                <option value="hi">हिन्दी</option>
+            </select>
+
             <button class="mic-button"
                     id="micButton"
                     title="Start voice recording"
@@ -501,17 +569,24 @@ button:disabled {
         </div>
 
         <div class="input-footer">
+
             <span id="inputStatus">
                 Text and multilingual voice supported
             </span>
+
             <span>RK Developer Studio</span>
+
         </div>
 
     </footer>
 
 </div>
 
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="toast"
+     id="toast"
+     role="status"
+     aria-live="polite">
+</div>
 
 
 <script>
@@ -522,22 +597,16 @@ button:disabled {
 ========================================= */
 
 const CONFIG = {
+
     websocketUrl:
         "wss://rkai-mobile-assistant.rkdeveloperstudio.workers.dev/ws",
 
     /*
-       Replace this placeholder locally with the new MOBILE_TOKEN
-       configured in Cloudflare.
-
+       Replace locally with your NEW MOBILE_TOKEN.
        Never publish a permanent shared token in public HTML.
     */
     mobileToken: "1b45eb76dbb603fcf7977245a57699f065851f1e2c23506e5d46458d48a0631b",
 
-    /*
-       Existing Cloudflare Worker transcription endpoint.
-       Expected multipart field: file
-       Expected success response: { success: true, text: "..." }
-    */
     transcriptionUrl:
         "https://rkai-mobile-assistant.rkdeveloperstudio.workers.dev/api/transcribe",
 
@@ -549,13 +618,26 @@ const CONFIG = {
    ELEMENTS
 ========================================= */
 
-const chatArea = document.getElementById("chatArea");
-const messages = document.getElementById("messages");
-const welcome = document.getElementById("welcome");
+const chatArea =
+    document.getElementById("chatArea");
 
-const messageInput = document.getElementById("messageInput");
-const sendButton = document.getElementById("sendButton");
-const micButton = document.getElementById("micButton");
+const messages =
+    document.getElementById("messages");
+
+const welcome =
+    document.getElementById("welcome");
+
+const messageInput =
+    document.getElementById("messageInput");
+
+const sendButton =
+    document.getElementById("sendButton");
+
+const micButton =
+    document.getElementById("micButton");
+
+const voiceLanguage =
+    document.getElementById("voiceLanguage");
 
 const connectionStatus =
     document.getElementById("connectionStatus");
@@ -566,7 +648,8 @@ const inputStatus =
 const typingIndicator =
     document.getElementById("typingIndicator");
 
-const toast = document.getElementById("toast");
+const toast =
+    document.getElementById("toast");
 
 
 /* =========================================
@@ -575,7 +658,7 @@ const toast = document.getElementById("toast");
 
 let socket = null;
 
-let pendingRequests = new Map();
+const pendingRequests = new Map();
 
 let isAuthenticated = false;
 let officeOnline = false;
@@ -589,6 +672,7 @@ let reconnectTimer = null;
 ========================================= */
 
 function showToast(message) {
+
     toast.textContent = message;
     toast.classList.add("show");
 
@@ -599,6 +683,7 @@ function showToast(message) {
 
 
 function getTime() {
+
     return new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit"
@@ -612,8 +697,10 @@ function scrollToBottom() {
 
 
 function createRequestId() {
+
     if (window.crypto &&
         typeof window.crypto.randomUUID === "function") {
+
         return window.crypto.randomUUID();
     }
 
@@ -623,6 +710,7 @@ function createRequestId() {
 
 
 function hasConfiguredToken() {
+
     return Boolean(
         CONFIG.mobileToken &&
         !CONFIG.mobileToken.startsWith("PASTE_")
@@ -631,6 +719,7 @@ function hasConfiguredToken() {
 
 
 function updateInputHeight() {
+
     messageInput.style.height = "auto";
 
     messageInput.style.height =
@@ -643,6 +732,7 @@ function updateInputHeight() {
 ========================================= */
 
 function setConnectionStatus(online, message) {
+
     connectionStatus.replaceChildren();
 
     const dot = document.createElement("span");
@@ -664,6 +754,7 @@ function setConnectionStatus(online, message) {
 ========================================= */
 
 function addMessage(type, text) {
+
     welcome.style.display = "none";
 
     const row = document.createElement("div");
@@ -705,6 +796,7 @@ function addMessage(type, text) {
 ========================================= */
 
 function sendMessage() {
+
     const message = messageInput.value.trim();
 
     if (!message) {
@@ -755,6 +847,7 @@ function sendToBackend(message) {
     }
 
     if (!officeOnline) {
+
         addMessage(
             "assistant",
             "The office application is currently offline. Open RK AI Business Assistant on the office PC and wait until it connects."
@@ -774,6 +867,7 @@ function sendToBackend(message) {
     };
 
     try {
+
         pendingRequests.set(requestId, {
             message: message,
             time: Date.now()
@@ -785,7 +879,9 @@ function sendToBackend(message) {
         scrollToBottom();
 
         window.setTimeout(() => {
+
             if (pendingRequests.has(requestId)) {
+
                 pendingRequests.delete(requestId);
 
                 typingIndicator.hidden =
@@ -796,9 +892,11 @@ function sendToBackend(message) {
                     "The office assistant has not responded yet. Check the desktop connection and try again."
                 );
             }
+
         }, 60000);
 
     } catch (error) {
+
         pendingRequests.delete(requestId);
 
         typingIndicator.hidden =
@@ -821,6 +919,7 @@ function sendToBackend(message) {
 function connectBackend() {
 
     if (CONFIG.demoMode) {
+
         setConnectionStatus(false, "Local preview mode");
         return;
     }
@@ -833,6 +932,7 @@ function connectBackend() {
     }
 
     if (!hasConfiguredToken()) {
+
         setConnectionStatus(false, "Configure mobile token");
         return;
     }
@@ -840,10 +940,12 @@ function connectBackend() {
     if (socket &&
         (socket.readyState === WebSocket.OPEN ||
          socket.readyState === WebSocket.CONNECTING)) {
+
         return;
     }
 
     try {
+
         authenticationFailed = false;
         isAuthenticated = false;
         officeOnline = false;
@@ -864,10 +966,14 @@ function connectBackend() {
         };
 
         socket.onmessage = function (event) {
+
             try {
+
                 const data = JSON.parse(event.data);
                 handleBackendMessage(data);
+
             } catch (error) {
+
                 console.error(
                     "Invalid server response:",
                     error
@@ -880,6 +986,7 @@ function connectBackend() {
         };
 
         socket.onclose = function () {
+
             isAuthenticated = false;
             officeOnline = false;
 
@@ -889,6 +996,7 @@ function connectBackend() {
             pendingRequests.clear();
 
             if (reconnectTimer) {
+
                 clearTimeout(reconnectTimer);
                 reconnectTimer = null;
             }
@@ -905,7 +1013,9 @@ function connectBackend() {
         };
 
     } catch (error) {
+
         console.error("Connection failed:", error);
+
         setConnectionStatus(false, "Connection failed");
     }
 }
@@ -919,6 +1029,7 @@ function handleBackendMessage(data) {
 
     if (!data ||
         typeof data.type !== "string") {
+
         return;
     }
 
@@ -927,6 +1038,7 @@ function handleBackendMessage(data) {
         case "authenticated":
 
             if (data.role !== "mobile") {
+
                 authenticationFailed = true;
 
                 setConnectionStatus(
@@ -967,6 +1079,7 @@ function handleBackendMessage(data) {
 
             if (socket &&
                 socket.readyState === WebSocket.OPEN) {
+
                 socket.close();
             }
 
@@ -978,6 +1091,7 @@ function handleBackendMessage(data) {
             officeOnline = Boolean(data.online);
 
             if (isAuthenticated) {
+
                 setConnectionStatus(
                     officeOnline,
                     officeOnline
@@ -1025,8 +1139,11 @@ function handleBackendMessage(data) {
         case "error": {
 
             if (data.requestId) {
+
                 pendingRequests.delete(data.requestId);
+
             } else if (data.type === "office_unavailable") {
+
                 pendingRequests.clear();
             }
 
@@ -1126,6 +1243,7 @@ function getAudioFileExtension(mimeType) {
         .trim();
 
     const mimeMap = {
+
         "audio/webm": "webm",
         "audio/mp4": "m4a",
         "audio/m4a": "m4a",
@@ -1170,6 +1288,7 @@ async function startVoiceRecording() {
 
         voiceStream =
             await navigator.mediaDevices.getUserMedia({
+
                 audio: {
                     echoCancellation: true,
                     noiseSuppression: true,
@@ -1186,14 +1305,19 @@ async function startVoiceRecording() {
         if (MediaRecorder.isTypeSupported(
             "audio/webm;codecs=opus"
         )) {
+
             mimeType = "audio/webm;codecs=opus";
+
         } else if (MediaRecorder.isTypeSupported(
             "audio/mp4"
         )) {
+
             mimeType = "audio/mp4";
+
         } else if (MediaRecorder.isTypeSupported(
             "audio/ogg;codecs=opus"
         )) {
+
             mimeType = "audio/ogg;codecs=opus";
         }
 
@@ -1206,8 +1330,10 @@ async function startVoiceRecording() {
 
 
         mediaRecorder.ondataavailable = function (event) {
+
             if (event.data &&
                 event.data.size > 0) {
+
                 voiceChunks.push(event.data);
             }
         };
@@ -1272,7 +1398,9 @@ async function startVoiceRecording() {
         mediaRecorder.start(250);
 
         micButton.classList.add("recording");
+
         micButton.title = "Stop voice recording";
+
         micButton.setAttribute(
             "aria-label",
             "Stop voice recording"
@@ -1289,6 +1417,7 @@ async function startVoiceRecording() {
         // Safety limit: automatically stop after 60 seconds.
         maximumRecordingTimer = window.setTimeout(
             function () {
+
                 if (mediaRecorder &&
                     mediaRecorder.state === "recording") {
 
@@ -1298,6 +1427,7 @@ async function startVoiceRecording() {
 
                     stopVoiceRecording(true);
                 }
+
             },
             VOICE_SETTINGS.maximumRecordingMs
         );
@@ -1327,11 +1457,13 @@ async function startVoiceRecording() {
 function stopVoiceRecording(shouldTranscribe) {
 
     if (!mediaRecorder) {
+
         cleanupVoiceCapture();
         return;
     }
 
     if (mediaRecorder.state === "inactive") {
+
         cleanupVoiceCapture();
         return;
     }
@@ -1339,11 +1471,13 @@ function stopVoiceRecording(shouldTranscribe) {
     voiceStopping = true;
 
     if (maximumRecordingTimer) {
+
         clearTimeout(maximumRecordingTimer);
         maximumRecordingTimer = null;
     }
 
     if (!shouldTranscribe) {
+
         voiceChunks = [];
 
         mediaRecorder.onstop = function () {
@@ -1352,6 +1486,7 @@ function stopVoiceRecording(shouldTranscribe) {
     }
 
     try {
+
         mediaRecorder.stop();
 
         inputStatus.textContent = shouldTranscribe
@@ -1377,11 +1512,13 @@ function stopVoiceRecording(shouldTranscribe) {
 function cleanupVoiceCapture() {
 
     if (maximumRecordingTimer) {
+
         clearTimeout(maximumRecordingTimer);
         maximumRecordingTimer = null;
     }
 
     if (voiceStream) {
+
         voiceStream.getTracks().forEach(
             track => track.stop()
         );
@@ -1390,6 +1527,7 @@ function cleanupVoiceCapture() {
     }
 
     if (audioContext) {
+
         audioContext.close().catch(() => {});
         audioContext = null;
     }
@@ -1401,6 +1539,7 @@ function cleanupVoiceCapture() {
     micButton.classList.remove("recording");
 
     micButton.title = "Start voice recording";
+
     micButton.setAttribute(
         "aria-label",
         "Start voice recording"
@@ -1418,6 +1557,7 @@ function cleanupVoiceCapture() {
 async function transcribeAndSend(audioBlob) {
 
     if (!CONFIG.transcriptionUrl) {
+
         showToast(
             "Transcription URL is missing from CONFIG."
         );
@@ -1426,6 +1566,7 @@ async function transcribeAndSend(audioBlob) {
     }
 
     if (!hasConfiguredToken()) {
+
         showToast(
             "Configure your mobile token before using voice input."
         );
@@ -1434,6 +1575,7 @@ async function transcribeAndSend(audioBlob) {
     }
 
     if (!audioBlob || audioBlob.size === 0) {
+
         showToast("No audio data was recorded.");
         return;
     }
@@ -1442,17 +1584,36 @@ async function transcribeAndSend(audioBlob) {
         "Detecting language and transcribing...";
 
     micButton.disabled = true;
+    voiceLanguage.disabled = true;
 
     try {
 
         const formData = new FormData();
 
+        /*
+           Selected language for Whisper transcription.
+
+           Empty value = automatic language detection.
+           en = English
+           ml = Malayalam
+           ar = Arabic
+        */
+
+        const selectedLanguage = voiceLanguage.value;
+
+        if (selectedLanguage) {
+
+            formData.append(
+                "language",
+                selectedLanguage
+            );
+        }
+
         const extension =
             getAudioFileExtension(audioBlob.type);
 
         /*
-           IMPORTANT:
-           Your Cloudflare Worker expects multipart field "file".
+           Cloudflare Worker expects multipart field "file".
            Do not rename this to "audio".
         */
 
@@ -1474,7 +1635,7 @@ async function transcribeAndSend(audioBlob) {
 
                 /*
                    Do not manually set Content-Type.
-                   The browser must generate the multipart boundary.
+                   The browser generates the multipart boundary.
                 */
 
                 body: formData
@@ -1519,13 +1680,14 @@ async function transcribeAndSend(audioBlob) {
         }
 
 
-        // Display the recognized words in the input box.
+        // Display recognized words in the input box.
         messageInput.value = transcript;
 
         updateInputHeight();
 
 
         if (result.language) {
+
             console.info(
                 "Detected speech language:",
                 result.language
@@ -1534,12 +1696,13 @@ async function transcribeAndSend(audioBlob) {
 
 
         /*
-           Reuse the existing messaging pipeline.
+           Existing messaging pipeline:
 
-           Transcript -> sendMessage()
-           -> sendToBackend()
-           -> Cloudflare WebSocket
-           -> Office VB.NET application
+           Transcript
+             -> sendMessage()
+             -> sendToBackend()
+             -> Cloudflare WebSocket
+             -> Office VB.NET application
         */
 
         sendMessage();
@@ -1559,6 +1722,7 @@ async function transcribeAndSend(audioBlob) {
     } finally {
 
         micButton.disabled = false;
+        voiceLanguage.disabled = false;
 
         inputStatus.textContent =
             "Text and multilingual voice supported";
@@ -1718,6 +1882,7 @@ window.addEventListener(
         }
 
         if (voiceStream) {
+
             voiceStream.getTracks().forEach(
                 track => track.stop()
             );
@@ -1729,6 +1894,55 @@ window.addEventListener(
             socket.close();
         }
     }
+);
+
+
+/* =========================================
+   PREVENT MOBILE PAGE ZOOM
+========================================= */
+
+// Prevent pinch-to-zoom where supported.
+document.addEventListener(
+    "gesturestart",
+    function (event) {
+        event.preventDefault();
+    },
+    { passive: false }
+);
+
+document.addEventListener(
+    "gesturechange",
+    function (event) {
+        event.preventDefault();
+    },
+    { passive: false }
+);
+
+document.addEventListener(
+    "gestureend",
+    function (event) {
+        event.preventDefault();
+    },
+    { passive: false }
+);
+
+// Prevent rapid double-tap zoom where supported.
+let lastTouchEnd = 0;
+
+document.addEventListener(
+    "touchend",
+    function (event) {
+
+        const now = Date.now();
+
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+        }
+
+        lastTouchEnd = now;
+
+    },
+    { passive: false }
 );
 
 </script>
@@ -1766,39 +1980,6 @@ if ("serviceWorker" in navigator) {
     );
 }
 </script>
-
-
-/* =========================================
-   PREVENT MOBILE PAGE ZOOM
-========================================= */
-
-// Prevent pinch-to-zoom gestures.
-document.addEventListener("gesturestart", function (event) {
-    event.preventDefault();
-}, { passive: false });
-
-document.addEventListener("gesturechange", function (event) {
-    event.preventDefault();
-}, { passive: false });
-
-document.addEventListener("gestureend", function (event) {
-    event.preventDefault();
-}, { passive: false });
-
-// Prevent double-tap zoom.
-let lastTouchEnd = 0;
-
-document.addEventListener("touchend", function (event) {
-
-    const now = Date.now();
-
-    if (now - lastTouchEnd <= 300) {
-        event.preventDefault();
-    }
-
-    lastTouchEnd = now;
-
-}, { passive: false });
 
 </body>
 </html>
