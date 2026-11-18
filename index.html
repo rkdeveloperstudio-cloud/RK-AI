@@ -3,8 +3,6 @@
 <head>
 <meta charset="UTF-8">
 
-<!-- iOS will ignore user-scalable=no in modern versions;
-     the font-size fix is what really prevents zoom. -->
 <meta name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
@@ -27,15 +25,6 @@
     --primary-hover: #3972ed;
     --success: #22c58b;
     --danger: #f87171;
-
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --safe-left: env(safe-area-inset-left, 0px);
-    --safe-right: env(safe-area-inset-right, 0px);
-
-    /* iOS Safari auto-zooms on focus if input font-size < 16px.
-       We define it here so every focusable control uses it. */
-    --input-font-size: 16px;
 }
 
 * {
@@ -49,8 +38,6 @@ body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
 }
 
 html {
@@ -63,16 +50,12 @@ body {
     color: var(--text);
     height: 100vh;
     height: 100dvh;
-    overscroll-behavior: none;
 }
 
 button,
 textarea,
-select,
-input {
+select {
     font-family: inherit;
-    /* HARD REQUIREMENT: never drop below 16px on iOS. */
-    font-size: var(--input-font-size);
 }
 
 button,
@@ -88,26 +71,22 @@ button {
     width: 100%;
     max-width: 950px;
     height: 100%;
-    margin: 0 auto;
+    margin: auto;
     display: flex;
     flex-direction: column;
     background: var(--bg);
     min-width: 0;
-    padding-left: var(--safe-left);
-    padding-right: var(--safe-right);
 }
 
-/* ---------------- HEADER ---------------- */
+/* HEADER */
 
 .header {
-    flex: 0 0 auto;
-    min-height: 68px;
-    padding: 10px 14px;
-    padding-top: calc(10px + var(--safe-top));
+    flex-shrink: 0;
+    min-height: 76px;
+    padding: 12px 18px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
     background: var(--panel);
     border-bottom: 1px solid var(--border);
 }
@@ -115,55 +94,42 @@ button {
 .brand {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     min-width: 0;
-    flex: 1 1 auto;
 }
 
 .logo {
-    width: 42px;
-    height: 42px;
-    flex: 0 0 42px;
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
     background: var(--primary);
-    border-radius: 12px;
+    border-radius: 14px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 17px;
+    font-size: 19px;
     font-weight: 800;
-    color: #fff;
-}
-
-.brand-text {
-    min-width: 0;
-    overflow: hidden;
+    color: white;
 }
 
 .brand h1 {
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 650;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .connection {
     color: var(--muted);
-    font-size: 11px;
-    margin-top: 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 12px;
+    margin-top: 5px;
 }
 
 .dot {
     display: inline-block;
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     margin-right: 5px;
     background: var(--danger);
-    vertical-align: middle;
 }
 
 .dot.online {
@@ -172,87 +138,76 @@ button {
 
 .header-actions {
     display: flex;
-    gap: 6px;
-    flex: 0 0 auto;
+    gap: 8px;
 }
 
 .icon-button {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border: 1px solid var(--border);
-    border-radius: 11px;
+    border-radius: 12px;
     background: var(--panel2);
     color: var(--text);
-    font-size: 18px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    font-size: 19px;
 }
 
-/* ---------------- CHAT ---------------- */
+/* CHAT */
 
 .chat-area {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 18px 14px;
+    padding: 24px 18px;
     scroll-behavior: smooth;
     overscroll-behavior: contain;
-    min-width: 0;
 }
 
 .welcome {
     max-width: 520px;
-    margin: 32px auto 24px;
+    margin: 50px auto 30px;
     text-align: center;
-    padding: 0 4px;
 }
 
 .welcome-logo {
-    width: 62px;
-    height: 62px;
-    border-radius: 18px;
+    width: 70px;
+    height: 70px;
+    border-radius: 20px;
     background: var(--primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 16px;
-    font-size: 22px;
+    margin: auto auto 20px;
+    font-size: 25px;
     font-weight: 800;
-    color: #fff;
 }
 
 .welcome h2 {
-    font-size: 21px;
-    margin-bottom: 10px;
-    line-height: 1.25;
+    font-size: 24px;
+    margin-bottom: 12px;
 }
 
 .welcome p {
     color: var(--muted);
-    font-size: 13.5px;
-    line-height: 1.6;
+    font-size: 14px;
+    line-height: 1.7;
 }
 
 .suggestions {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-    margin-top: 22px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 25px;
 }
 
 .suggestion {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 12px 10px;
+    padding: 14px 10px;
     color: var(--text);
     font-size: 13px;
-    line-height: 1.35;
     text-align: left;
-    min-width: 0;
-    overflow-wrap: anywhere;
 }
 
 .suggestion:hover {
@@ -260,12 +215,11 @@ button {
     background: var(--panel2);
 }
 
-/* ---------------- MESSAGES ---------------- */
+/* MESSAGES */
 
 .message-row {
     display: flex;
-    margin-bottom: 16px;
-    min-width: 0;
+    margin-bottom: 20px;
 }
 
 .message-row.user {
@@ -277,20 +231,18 @@ button {
 }
 
 .message-bubble {
-    max-width: 88%;
-    padding: 12px 14px;
+    max-width: 85%;
+    padding: 14px 16px;
     border-radius: 16px;
     font-size: 14px;
-    line-height: 1.6;
+    line-height: 1.65;
     overflow-wrap: anywhere;
-    word-break: break-word;
     white-space: pre-wrap;
-    min-width: 0;
 }
 
 .user .message-bubble {
     background: var(--primary);
-    color: #fff;
+    color: white;
     border-bottom-right-radius: 4px;
 }
 
@@ -303,7 +255,7 @@ button {
 
 .message-time {
     display: block;
-    margin-top: 6px;
+    margin-top: 7px;
     font-size: 10px;
     opacity: 0.65;
     text-align: right;
@@ -312,36 +264,34 @@ button {
 .message-label {
     font-size: 11px;
     color: var(--muted);
-    margin-bottom: 4px;
+    margin-bottom: 5px;
 }
 
 .typing {
     color: var(--muted);
     font-size: 13px;
-    padding: 10px 4px;
+    padding: 12px;
 }
 
-/* ---------------- INPUT ---------------- */
+/* INPUT */
 
 .input-section {
-    flex: 0 0 auto;
-    padding: 10px 12px;
-    padding-bottom: calc(10px + var(--safe-bottom));
+    flex-shrink: 0;
+    padding: 14px 16px 10px;
     background: var(--panel);
     border-top: 1px solid var(--border);
-    min-width: 0;
 }
 
 .input-container {
     display: flex;
-    align-items: flex-end;
-    gap: 6px;
+    align-items: center;
+    gap: 8px;
     width: 100%;
     min-width: 0;
     background: var(--panel2);
     border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 6px;
+    padding: 8px;
 }
 
 .input-container textarea {
@@ -354,39 +304,48 @@ button {
     border: none;
     outline: none;
     color: var(--text);
-    padding: 9px 6px;
-    /* >= 16px is what stops iOS auto-zoom. */
-    font-size: var(--input-font-size);
-    line-height: 1.45;
+    padding: 10px 7px;
+    font-size: 14px;
+    line-height: 1.5;
 }
 
 .input-container textarea::placeholder {
     color: var(--muted);
-    font-size: var(--input-font-size);
 }
 
-/* ---------------- VOICE LANGUAGE SELECTOR ---------------- */
+/* VOICE LANGUAGE SELECTOR */
 
 #voiceLanguage {
-    display: block;
-    flex: 0 0 auto;
-    width: auto;
-    min-width: 64px;
-    max-width: 30%;
-    height: 40px;
-    padding: 0 4px;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    flex: 0 0 105px;
+    width: 105px;
+    min-width: 105px;
+    max-width: 105px;
+
+    height: 43px;
+    min-height: 43px;
+
+    padding: 0 7px;
     margin: 0;
-    color: var(--text);
-    background-color: var(--panel2);
+
+    color: #edf3fb;
+    background-color: #202e43;
+
     border: 1px solid #475569;
     border-radius: 10px;
-    /* >= 16px prevents iOS zoom when this control is tapped. */
-    font-size: var(--input-font-size);
+
+    font-family: inherit;
+    font-size: 12px;
+
     appearance: auto;
     -webkit-appearance: menulist;
+
     outline: none;
     cursor: pointer;
-    text-overflow: ellipsis;
+    flex-shrink: 0;
 }
 
 #voiceLanguage:focus {
@@ -394,31 +353,45 @@ button {
 }
 
 #voiceLanguage option {
-    color: var(--text);
-    background-color: var(--panel2);
-    font-size: var(--input-font-size);
+    color: #edf3fb;
+    background-color: #202e43;
 }
 
-/* ---------------- BUTTONS ---------------- */
-
-.send-button,
-.mic-button {
-    flex: 0 0 40px;
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    border: none;
-    border-radius: 12px;
-    font-size: 18px;
+/* LIVE SPEECH PREVIEW / CANCEL */
+.cancel-recording-button {
+    display: none;
+    min-height: 38px;
+    padding: 0 10px;
+    border: 1px solid var(--danger);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--danger);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.cancel-recording-button.visible {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
+}
+
+/* BUTTONS */
+
+.send-button,
+.mic-button {
+    width: 43px;
+    height: 43px;
+    min-width: 43px;
+    flex: 0 0 43px;
+    border: none;
+    border-radius: 12px;
+    font-size: 19px;
 }
 
 .send-button {
     background: var(--primary);
-    color: #fff;
+    color: white;
 }
 
 .send-button:hover {
@@ -432,7 +405,7 @@ button {
 
 .mic-button.recording {
     background: var(--danger);
-    color: #fff;
+    color: white;
     animation: pulse 1s infinite;
 }
 
@@ -443,252 +416,114 @@ select:disabled {
 }
 
 @keyframes pulse {
-    50% { opacity: 0.55; }
+    50% {
+        opacity: 0.55;
+    }
 }
 
-/* ---------------- FOOTER ---------------- */
+/* FOOTER */
 
 .input-footer {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-    margin-top: 8px;
+    gap: 10px;
+    margin-top: 10px;
     color: var(--muted);
     font-size: 10px;
-    line-height: 1.3;
-    min-width: 0;
 }
 
-.input-footer span {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* ---------------- TOAST ---------------- */
+/* NOTIFICATION */
 
 .toast {
     position: fixed;
     left: 50%;
-    bottom: calc(80px + var(--safe-bottom));
+    bottom: 95px;
     transform: translateX(-50%);
     background: #26374e;
-    color: #fff;
+    color: white;
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 10px 14px;
+    padding: 11px 16px;
     font-size: 13px;
     display: none;
     z-index: 10000;
-    width: max-content;
-    max-width: min(90vw, 480px);
+    max-width: 90%;
     text-align: center;
-    overflow-wrap: anywhere;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
 }
 
 .toast.show {
     display: block;
 }
 
-/* ---------------- SMALL PHONES (≤ 420px) ----------------
-   CRITICAL: do NOT reduce font-size of textarea or select here.
-   iOS zoom is triggered by computed font-size at focus time. */
+/* MOBILE */
 
-@media (max-width: 420px) {
+@media (max-width: 600px) {
+
     .header {
-        padding: 8px 10px;
-        padding-top: calc(8px + var(--safe-top));
-        min-height: 60px;
+        min-height: 68px;
+        padding: 10px 13px;
     }
 
-    .logo {
-        width: 38px;
-        height: 38px;
-        flex-basis: 38px;
+    .brand h1 {
         font-size: 15px;
-        border-radius: 10px;
     }
 
-    .brand h1 { font-size: 14px; }
-    .connection { font-size: 10px; }
-
-    .icon-button {
-        width: 36px;
-        height: 36px;
-        font-size: 16px;
+    .chat-area {
+        padding: 18px 12px;
     }
 
-    .chat-area { padding: 14px 10px; }
+    .welcome {
+        margin-top: 35px;
+    }
 
-    .welcome h2 { font-size: 19px; }
-    .welcome p { font-size: 13px; }
+    .welcome h2 {
+        font-size: 21px;
+    }
 
     .suggestions {
-        grid-template-columns: 1fr;
-        gap: 7px;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .suggestion {
+        font-size: 12px;
+        padding: 12px 9px;
     }
 
     .message-bubble {
-        max-width: 92%;
+        max-width: 90%;
         font-size: 14px;
     }
 
     .input-section {
-        padding: 8px;
-        padding-bottom: calc(8px + var(--safe-bottom));
+        padding: 10px;
     }
 
     .input-container {
-        gap: 4px;
-        padding: 5px;
-        border-radius: 14px;
-    }
-
-    .input-container textarea {
-        padding: 8px 5px;
-        /* Keep 16px — do not shrink. */
-        font-size: var(--input-font-size);
+        gap: 5px;
+        padding: 6px;
     }
 
     #voiceLanguage {
-        min-width: 58px;
-        max-width: 26%;
-        height: 38px;
-        /* Keep 16px — do not shrink. */
-        font-size: var(--input-font-size);
-        padding: 0 3px;
+        flex: 0 0 88px;
+        width: 88px;
+        min-width: 88px;
+        max-width: 88px;
+        font-size: 11px;
+        padding: 0 4px;
     }
 
     .send-button,
     .mic-button {
-        flex: 0 0 38px;
-        width: 38px;
-        height: 38px;
-        min-width: 38px;
-        border-radius: 11px;
-        font-size: 17px;
+        width: 40px;
+        min-width: 40px;
+        flex: 0 0 40px;
+        height: 43px;
     }
 
-    .input-footer { font-size: 9px; }
-
-    .toast {
-        bottom: calc(72px + var(--safe-bottom));
-        font-size: 12px;
-        padding: 9px 12px;
+    .input-footer {
+        font-size: 9px;
     }
-}
-
-/* ---------------- VERY SMALL PHONES (≤ 340px) ---------------- */
-
-@media (max-width: 340px) {
-    .input-container { flex-wrap: wrap; }
-
-    .input-container textarea {
-        flex: 1 1 100%;
-        width: 100%;
-        min-height: 42px;
-        padding: 8px 6px;
-    }
-
-    #voiceLanguage {
-        flex: 1 1 auto;
-        max-width: none;
-        min-width: 0;
-        height: 38px;
-    }
-
-    .send-button,
-    .mic-button {
-        flex: 0 0 36px;
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-    }
-
-    .input-footer span:last-child { display: none; }
-}
-
-/* ---------------- LANDSCAPE PHONE ---------------- */
-
-@media (max-height: 480px) and (orientation: landscape) {
-    .welcome { margin: 16px auto 14px; }
-    .welcome-logo { width: 48px; height: 48px; font-size: 18px; margin-bottom: 10px; }
-    .welcome h2 { font-size: 18px; margin-bottom: 6px; }
-    .welcome p { font-size: 12.5px; }
-    .suggestions { margin-top: 14px; }
-    .chat-area { padding: 12px 12px; }
-    .header { min-height: 54px; }
-}
-
-/* ---------------- TABLET / DESKTOP (≥ 700px) ---------------- */
-
-@media (min-width: 700px) {
-    .header {
-        padding: 12px 20px;
-        padding-top: calc(12px + var(--safe-top));
-        min-height: 74px;
-    }
-
-    .logo {
-        width: 46px;
-        height: 46px;
-        flex-basis: 46px;
-        font-size: 19px;
-        border-radius: 14px;
-    }
-
-    .brand h1 { font-size: 17px; }
-    .connection { font-size: 12px; }
-
-    .chat-area { padding: 24px 20px; }
-    .welcome { margin-top: 50px; }
-    .welcome h2 { font-size: 24px; }
-    .welcome p { font-size: 14px; }
-    .suggestions { gap: 10px; margin-top: 25px; }
-    .suggestion { padding: 14px 12px; font-size: 13px; }
-
-    .message-bubble { max-width: 75%; font-size: 14.5px; }
-
-    .input-section {
-        padding: 14px 20px;
-        padding-bottom: calc(10px + var(--safe-bottom));
-    }
-
-    .input-container { gap: 8px; padding: 8px; }
-
-    .input-container textarea {
-        padding: 10px 8px;
-        /* On desktop zoom doesn't apply, but keep consistent. */
-        font-size: 15px;
-    }
-
-    #voiceLanguage {
-        min-width: 92px;
-        max-width: 140px;
-        height: 42px;
-        font-size: 14px;
-        padding: 0 6px;
-    }
-
-    .send-button,
-    .mic-button {
-        flex: 0 0 42px;
-        width: 42px;
-        height: 42px;
-        min-width: 42px;
-        border-radius: 12px;
-        font-size: 19px;
-    }
-
-    .input-footer { font-size: 10.5px; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .chat-area { scroll-behavior: auto; }
-    .mic-button.recording { animation: none; }
 }
 </style>
 </head>
@@ -698,10 +533,13 @@ select:disabled {
 <div class="app">
 
     <header class="header">
+
         <div class="brand">
             <div class="logo">RK</div>
-            <div class="brand-text">
+
+            <div>
                 <h1>RK AI Assistant</h1>
+
                 <div class="connection" id="connectionStatus">
                     <span class="dot"></span>
                     Backend not connected
@@ -713,14 +551,21 @@ select:disabled {
             <button class="icon-button"
                     id="clearButton"
                     title="Clear chat"
-                    aria-label="Clear chat">↻</button>
+                    aria-label="Clear chat">
+                ↻
+            </button>
         </div>
+
     </header>
 
     <main class="chat-area" id="chatArea">
+
         <section class="welcome" id="welcome">
+
             <div class="welcome-logo">RK</div>
+
             <h2>Welcome to RK AI</h2>
+
             <p>
                 Your mobile business assistant.
                 Ask questions about sales, purchases,
@@ -728,11 +573,29 @@ select:disabled {
             </p>
 
             <div class="suggestions">
-                <button class="suggestion" data-message="Check my today's total sales">Today's total sales</button>
-                <button class="suggestion" data-message="Show my current stock summary">Current stock summary</button>
-                <button class="suggestion" data-message="Show my top selling products">Top selling products</button>
-                <button class="suggestion" data-message="Show my purchase summary">Purchase summary</button>
+
+                <button class="suggestion"
+                        data-message="Check my today's total sales">
+                    Today's total sales
+                </button>
+
+                <button class="suggestion"
+                        data-message="Show my current stock summary">
+                    Current stock summary
+                </button>
+
+                <button class="suggestion"
+                        data-message="Show my top selling products">
+                    Top selling products
+                </button>
+
+                <button class="suggestion"
+                        data-message="Show my purchase summary">
+                    Purchase summary
+                </button>
+
             </div>
+
         </section>
 
         <div id="messages"></div>
@@ -740,10 +603,13 @@ select:disabled {
         <div id="typingIndicator" class="typing" hidden>
             RK AI is processing...
         </div>
+
     </main>
 
     <footer class="input-section">
+
         <div class="input-container">
+
             <textarea
                 id="messageInput"
                 placeholder="Ask your business assistant..."
@@ -754,28 +620,47 @@ select:disabled {
             <select id="voiceLanguage"
                     aria-label="Voice transcription language"
                     title="Voice language">
+
                 <option value="">Auto</option>
                 <option value="en">English</option>
                 <option value="ml">മലയാളം</option>
                 <option value="ar">العربية</option>
                 <option value="hi">हिन्दी</option>
+
             </select>
 
             <button class="mic-button"
                     id="micButton"
                     title="Start voice recording"
-                    aria-label="Start voice recording">🎙️</button>
+                    aria-label="Start voice recording">
+                🎤
+            </button>
+
+            <button class="cancel-recording-button"
+                    id="cancelRecordingButton"
+                    type="button"
+                    title="Discard this recording"
+                    aria-label="Cancel and discard recording">
+                Cancel
+            </button>
 
             <button class="send-button"
                     id="sendButton"
                     title="Send message"
-                    aria-label="Send message">➤</button>
+                    aria-label="Send message">
+                ➤
+            </button>
+
         </div>
 
         <div class="input-footer">
-            <span id="inputStatus">Text and multilingual voice supported</span>
+            <span id="inputStatus">
+                Text and multilingual voice supported
+            </span>
+
             <span>RK Developer Studio</span>
         </div>
+
     </footer>
 
 </div>
@@ -784,7 +669,8 @@ select:disabled {
      id="toast"
      role="status"
      aria-live="polite"></div>
-      <script>
+
+<script>
 "use strict";
 
 /* =========================================
@@ -814,6 +700,7 @@ const welcome = document.getElementById("welcome");
 const messageInput = document.getElementById("messageInput");
 const sendButton = document.getElementById("sendButton");
 const micButton = document.getElementById("micButton");
+const cancelRecordingButton = document.getElementById("cancelRecordingButton");
 const voiceLanguage = document.getElementById("voiceLanguage");
 const connectionStatus = document.getElementById("connectionStatus");
 const inputStatus = document.getElementById("inputStatus");
@@ -1254,6 +1141,12 @@ let voiceChunks = [];
 let voiceStopping = false;
 let maximumRecordingTimer = null;
 let voiceStartedAt = 0;
+let speechRecognition = null;
+let voiceOriginalInput = "";
+let voiceFinalTranscript = "";
+let voiceInterimTranscript = "";
+let voiceWasCancelled = false;
+
 
 const VOICE_SETTINGS = {
     maximumRecordingMs: 60000,
@@ -1293,6 +1186,118 @@ function getAudioFileExtension(mimeType) {
 }
 
 /* =========================================
+   LIVE SPEECH-TO-TEXT PREVIEW
+========================================= */
+
+function getSpeechRecognitionLanguage() {
+    const selected = voiceLanguage.value;
+    const localeByLanguage = {
+        en: "en-US",
+        ml: "ml-IN",
+        ar: "ar-SA",
+        hi: "hi-IN"
+    };
+
+    return localeByLanguage[selected] ||
+        (navigator.language || "en-US");
+}
+
+function startLiveSpeechPreview() {
+    const Recognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+    if (!Recognition) {
+        inputStatus.textContent =
+            "Recording — live text preview is not supported in this browser";
+        return;
+    }
+
+    try {
+        speechRecognition = new Recognition();
+        speechRecognition.lang = getSpeechRecognitionLanguage();
+        speechRecognition.continuous = true;
+        speechRecognition.interimResults = true;
+        speechRecognition.maxAlternatives = 1;
+
+        speechRecognition.onresult = function (event) {
+            let interim = "";
+
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const result = event.results[i];
+                const phrase = result[0] && result[0].transcript
+                    ? result[0].transcript
+                    : "";
+
+                if (result.isFinal) {
+                    voiceFinalTranscript += phrase;
+                } else {
+                    interim += phrase;
+                }
+            }
+
+            voiceInterimTranscript = interim;
+            const liveText =
+                voiceOriginalInput +
+                (voiceOriginalInput && (voiceFinalTranscript || interim) ? " " : "") +
+                voiceFinalTranscript +
+                voiceInterimTranscript;
+
+            messageInput.value = liveText;
+            updateInputHeight();
+            messageInput.setSelectionRange(liveText.length, liveText.length);
+        };
+
+        speechRecognition.onerror = function (event) {
+            console.warn("Live speech recognition:", event.error);
+            if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+                inputStatus.textContent =
+                    "Recording — allow speech recognition permission to show live text";
+            }
+        };
+
+        speechRecognition.onend = function () {
+            // The media recording remains active until the user stops or cancels it.
+            if (mediaRecorder && mediaRecorder.state === "recording" && !voiceWasCancelled) {
+                inputStatus.textContent =
+                    "Recording — live preview paused; tap microphone to finish";
+            }
+        };
+
+        speechRecognition.start();
+    } catch (error) {
+        console.warn("Could not start live speech preview:", error);
+    }
+}
+
+function stopLiveSpeechPreview(cancelled) {
+    if (speechRecognition) {
+        try {
+            if (cancelled && typeof speechRecognition.abort === "function") {
+                speechRecognition.abort();
+            } else {
+                speechRecognition.stop();
+            }
+        } catch (error) {
+            console.warn("Could not stop speech recognition:", error);
+        }
+        speechRecognition = null;
+    }
+}
+
+function cancelVoiceRecording() {
+    if (!mediaRecorder || mediaRecorder.state !== "recording") return;
+
+    voiceWasCancelled = true;
+    stopLiveSpeechPreview(true);
+    stopVoiceRecording(false);
+    messageInput.value = voiceOriginalInput;
+    updateInputHeight();
+    cancelRecordingButton.classList.remove("visible");
+    showToast("Recording cancelled. Audio and recognized speech discarded.");
+}
+
+/* =========================================
    START RECORDING
 ========================================= */
 
@@ -1324,6 +1329,10 @@ async function startVoiceRecording() {
         voiceChunks = [];
         voiceStopping = false;
         voiceStartedAt = Date.now();
+        voiceOriginalInput = messageInput.value;
+        voiceFinalTranscript = "";
+        voiceInterimTranscript = "";
+        voiceWasCancelled = false;
 
         let mimeType = "";
 
@@ -1373,6 +1382,11 @@ async function startVoiceRecording() {
         };
 
         mediaRecorder.onstop = async function () {
+            if (voiceWasCancelled) {
+                cleanupVoiceCapture();
+                return;
+            }
+
             // Do NOT read mediaRecorder.mimeType here — cleanup has
             // already run by the time this fires on some browsers.
             // Capture the type before cleanup.
@@ -1414,6 +1428,8 @@ async function startVoiceRecording() {
         };
 
         mediaRecorder.start(250);
+        startLiveSpeechPreview();
+        cancelRecordingButton.classList.add("visible");
 
         micButton.classList.add("recording");
         micButton.title = "Stop voice recording";
@@ -1423,7 +1439,7 @@ async function startVoiceRecording() {
         );
 
         inputStatus.textContent =
-            "Recording — tap microphone to stop";
+            "Recording — speech appears here; tap microphone to finish or Cancel to discard";
 
         showToast(
             "Recording started. Tap the microphone again when finished."
@@ -1469,12 +1485,17 @@ function stopVoiceRecording(shouldTranscribe) {
 
     voiceStopping = true;
 
+    if (shouldTranscribe) {
+        stopLiveSpeechPreview(false);
+    }
+
     if (maximumRecordingTimer) {
         clearTimeout(maximumRecordingTimer);
         maximumRecordingTimer = null;
     }
 
     if (!shouldTranscribe) {
+        stopLiveSpeechPreview(true);
         voiceChunks = [];
         mediaRecorder.onstop = function () {
             cleanupVoiceCapture();
@@ -1513,6 +1534,7 @@ function cleanupVoiceCapture() {
     mediaRecorder = null;
     voiceChunks = [];
     voiceStopping = false;
+    cancelRecordingButton.classList.remove("visible");
 
     micButton.classList.remove("recording");
     micButton.title = "Start voice recording";
@@ -1700,6 +1722,8 @@ micButton.addEventListener("click", function () {
         startVoiceRecording();
     }
 });
+
+cancelRecordingButton.addEventListener("click", cancelVoiceRecording);
 
 /* =========================================
    BUTTON EVENTS
