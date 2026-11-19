@@ -3,11 +3,19 @@
 <head>
 <meta charset="UTF-8">
 
+<!-- No zoom, edge-to-edge, keyboard resizes the page content (app-like) -->
 <meta name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+      content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
 
 <meta name="theme-color" content="#101827">
 <meta name="description" content="RK AI Mobile Business Assistant">
+<meta name="format-detection" content="telephone=no">
+
+<!-- Installed (home screen) app behaviour -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RK AI">
 
 <link rel="manifest" href="./manifest.json">
 
@@ -25,31 +33,44 @@
     --primary-hover: #3972ed;
     --success: #22c58b;
     --danger: #f87171;
+
+    /* Set by JavaScript from window.visualViewport so the layout
+       always matches the visible area (keyboard open or closed). */
+    --app-height: 100dvh;
+    --app-top: 0px;
 }
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-}
-
-html,
-body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-}
-
-html {
+    -webkit-tap-highlight-color: transparent;
+    /* Removes the double-tap-to-zoom delay and behaviour */
     touch-action: manipulation;
 }
 
+html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
 body {
-    font-family: "Segoe UI", Arial, sans-serif;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
     background: var(--bg);
     color: var(--text);
-    height: 100vh;
-    height: 100dvh;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
 }
 
 button,
@@ -58,24 +79,27 @@ select {
     font-family: inherit;
 }
 
-button,
-select {
-    touch-action: manipulation;
-}
-
 button {
     cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
+/* The app fills exactly the visible area, like a native app */
 .app {
+    position: fixed;
+    top: var(--app-top);
+    left: 0;
+    right: 0;
     width: 100%;
     max-width: 950px;
-    height: 100%;
-    margin: auto;
+    height: var(--app-height);
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
     background: var(--bg);
     min-width: 0;
+    overflow: hidden;
 }
 
 /* HEADER */
@@ -84,6 +108,9 @@ button {
     flex-shrink: 0;
     min-height: 76px;
     padding: 12px 18px;
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+    padding-left: calc(18px + env(safe-area-inset-left, 0px));
+    padding-right: calc(18px + env(safe-area-inset-right, 0px));
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -157,9 +184,11 @@ button {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     padding: 24px 18px;
-    scroll-behavior: smooth;
+    padding-left: calc(18px + env(safe-area-inset-left, 0px));
+    padding-right: calc(18px + env(safe-area-inset-right, 0px));
     overscroll-behavior: contain;
 }
 
@@ -210,9 +239,16 @@ button {
     text-align: left;
 }
 
-.suggestion:hover {
+.suggestion:active {
     border-color: var(--primary);
     background: var(--panel2);
+}
+
+@media (hover: hover) {
+    .suggestion:hover {
+        border-color: var(--primary);
+        background: var(--panel2);
+    }
 }
 
 /* MESSAGES */
@@ -238,6 +274,10 @@ button {
     line-height: 1.65;
     overflow-wrap: anywhere;
     white-space: pre-wrap;
+    /* Messages can still be selected and copied */
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
 }
 
 .user .message-bubble {
@@ -278,8 +318,20 @@ button {
 .input-section {
     flex-shrink: 0;
     padding: 14px 16px 10px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    padding-left: calc(16px + env(safe-area-inset-left, 0px));
+    padding-right: calc(16px + env(safe-area-inset-right, 0px));
     background: var(--panel);
     border-top: 1px solid var(--border);
+}
+
+/* Keyboard is open: no home-indicator gap, hide the footer line */
+body.keyboard-open .input-section {
+    padding-bottom: 10px;
+}
+
+body.keyboard-open .input-footer {
+    display: none;
 }
 
 .input-container {
@@ -294,6 +346,8 @@ button {
     padding: 8px;
 }
 
+/* 16px minimum: anything smaller makes iPhones zoom the page when
+   the box is tapped. This is the main cause of the zoom problem. */
 .input-container textarea {
     flex: 1 1 0;
     width: 0;
@@ -305,47 +359,35 @@ button {
     outline: none;
     color: var(--text);
     padding: 10px 7px;
-    font-size: 14px;
-    line-height: 1.5;
+    font-size: 16px;
+    line-height: 1.4;
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 0;
 }
 
 .input-container textarea::placeholder {
     color: var(--muted);
 }
 
-/* VOICE LANGUAGE SELECTOR */
+/* VOICE LANGUAGE SELECTOR (16px so it never triggers zoom either) */
 
 #voiceLanguage {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-
-    flex: 0 0 105px;
-    width: 105px;
-    min-width: 105px;
-    max-width: 105px;
-
+    flex: 0 0 96px;
+    width: 96px;
+    min-width: 96px;
+    max-width: 96px;
     height: 43px;
-    min-height: 43px;
-
-    padding: 0 7px;
-    margin: 0;
-
-    color: #edf3fb;
-    background-color: #202e43;
-
+    padding: 0 4px;
+    color: var(--text);
+    background-color: var(--panel2);
     border: 1px solid #475569;
     border-radius: 10px;
-
-    font-family: inherit;
-    font-size: 12px;
-
-    appearance: auto;
-    -webkit-appearance: menulist;
-
+    font-size: 16px;
     outline: none;
     cursor: pointer;
-    flex-shrink: 0;
 }
 
 #voiceLanguage:focus {
@@ -357,20 +399,26 @@ button {
     background-color: #202e43;
 }
 
-/* LIVE SPEECH PREVIEW / CANCEL */
+/* While recording, the language box is replaced by Cancel */
+.input-container.is-recording #voiceLanguage {
+    display: none;
+}
+
 .cancel-recording-button {
     display: none;
-    min-height: 38px;
-    padding: 0 10px;
+    flex: 0 0 auto;
+    height: 43px;
+    padding: 0 12px;
     border: 1px solid var(--danger);
     border-radius: 10px;
     background: transparent;
     color: var(--danger);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     white-space: nowrap;
 }
-.cancel-recording-button.visible {
+
+.input-container.is-recording .cancel-recording-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -394,7 +442,7 @@ button {
     color: white;
 }
 
-.send-button:hover {
+.send-button:active {
     background: var(--primary-hover);
 }
 
@@ -421,6 +469,12 @@ select:disabled {
     }
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .mic-button.recording {
+        animation: none;
+    }
+}
+
 /* FOOTER */
 
 .input-footer {
@@ -437,7 +491,7 @@ select:disabled {
 .toast {
     position: fixed;
     left: 50%;
-    bottom: 95px;
+    bottom: calc(100px + env(safe-area-inset-bottom, 0px));
     transform: translateX(-50%);
     background: #26374e;
     color: white;
@@ -461,7 +515,8 @@ select:disabled {
 
     .header {
         min-height: 68px;
-        padding: 10px 13px;
+        padding-top: calc(10px + env(safe-area-inset-top, 0px));
+        padding-bottom: 10px;
     }
 
     .brand h1 {
@@ -469,7 +524,8 @@ select:disabled {
     }
 
     .chat-area {
-        padding: 18px 12px;
+        padding-top: 18px;
+        padding-bottom: 18px;
     }
 
     .welcome {
@@ -481,7 +537,6 @@ select:disabled {
     }
 
     .suggestions {
-        grid-template-columns: 1fr 1fr;
         gap: 8px;
     }
 
@@ -492,11 +547,10 @@ select:disabled {
 
     .message-bubble {
         max-width: 90%;
-        font-size: 14px;
     }
 
     .input-section {
-        padding: 10px;
+        padding-top: 10px;
     }
 
     .input-container {
@@ -505,12 +559,10 @@ select:disabled {
     }
 
     #voiceLanguage {
-        flex: 0 0 88px;
-        width: 88px;
-        min-width: 88px;
-        max-width: 88px;
-        font-size: 11px;
-        padding: 0 4px;
+        flex: 0 0 90px;
+        width: 90px;
+        min-width: 90px;
+        max-width: 90px;
     }
 
     .send-button,
@@ -525,12 +577,28 @@ select:disabled {
         font-size: 9px;
     }
 }
+
+/* Short screens (landscape phones, keyboard open) */
+@media (max-height: 560px) {
+    .welcome {
+        margin: 12px auto;
+    }
+
+    .welcome-logo,
+    .welcome p {
+        display: none;
+    }
+
+    .header {
+        min-height: 56px;
+    }
+}
 </style>
 </head>
 
 <body>
 
-<div class="app">
+<div class="app" id="app">
 
     <header class="header">
 
@@ -550,6 +618,7 @@ select:disabled {
         <div class="header-actions">
             <button class="icon-button"
                     id="clearButton"
+                    type="button"
                     title="Clear chat"
                     aria-label="Clear chat">
                 ↻
@@ -575,21 +644,25 @@ select:disabled {
             <div class="suggestions">
 
                 <button class="suggestion"
+                        type="button"
                         data-message="Check my today's total sales">
                     Today's total sales
                 </button>
 
                 <button class="suggestion"
+                        type="button"
                         data-message="Show my current stock summary">
                     Current stock summary
                 </button>
 
                 <button class="suggestion"
+                        type="button"
                         data-message="Show my top selling products">
                     Top selling products
                 </button>
 
                 <button class="suggestion"
+                        type="button"
                         data-message="Show my purchase summary">
                     Purchase summary
                 </button>
@@ -608,33 +681,29 @@ select:disabled {
 
     <footer class="input-section">
 
-        <div class="input-container">
+        <div class="input-container" id="inputContainer">
 
             <textarea
                 id="messageInput"
                 placeholder="Ask your business assistant..."
                 rows="1"
                 maxlength="4000"
+                enterkeyhint="send"
+                autocomplete="off"
+                autocapitalize="sentences"
                 aria-label="Message"></textarea>
 
             <select id="voiceLanguage"
-                    aria-label="Voice transcription language"
+                    aria-label="Voice language"
                     title="Voice language">
 
-                <option value="">Auto</option>
                 <option value="en">English</option>
                 <option value="ml">മലയാളം</option>
                 <option value="ar">العربية</option>
                 <option value="hi">हिन्दी</option>
+                <option value="">Auto</option>
 
             </select>
-
-            <button class="mic-button"
-                    id="micButton"
-                    title="Start voice recording"
-                    aria-label="Start voice recording">
-                🎤
-            </button>
 
             <button class="cancel-recording-button"
                     id="cancelRecordingButton"
@@ -644,8 +713,17 @@ select:disabled {
                 Cancel
             </button>
 
+            <button class="mic-button"
+                    id="micButton"
+                    type="button"
+                    title="Start voice input"
+                    aria-label="Start voice input">
+                🎤
+            </button>
+
             <button class="send-button"
                     id="sendButton"
+                    type="button"
                     title="Send message"
                     aria-label="Send message">
                 ➤
@@ -655,7 +733,7 @@ select:disabled {
 
         <div class="input-footer">
             <span id="inputStatus">
-                Text and multilingual voice supported
+                Type, or tap 🎤 to speak
             </span>
 
             <span>RK Developer Studio</span>
@@ -694,18 +772,23 @@ const CONFIG = {
    ELEMENTS
 ========================================= */
 
+const rootElement = document.documentElement;
 const chatArea = document.getElementById("chatArea");
 const messages = document.getElementById("messages");
 const welcome = document.getElementById("welcome");
 const messageInput = document.getElementById("messageInput");
 const sendButton = document.getElementById("sendButton");
 const micButton = document.getElementById("micButton");
-const cancelRecordingButton = document.getElementById("cancelRecordingButton");
+const cancelRecordingButton =
+    document.getElementById("cancelRecordingButton");
+const inputContainer = document.getElementById("inputContainer");
 const voiceLanguage = document.getElementById("voiceLanguage");
 const connectionStatus = document.getElementById("connectionStatus");
 const inputStatus = document.getElementById("inputStatus");
 const typingIndicator = document.getElementById("typingIndicator");
 const toast = document.getElementById("toast");
+
+const IDLE_STATUS = "Type, or tap 🎤 to speak";
 
 /* =========================================
    APPLICATION STATE
@@ -717,6 +800,7 @@ let isAuthenticated = false;
 let officeOnline = false;
 let authenticationFailed = false;
 let reconnectTimer = null;
+let toastTimer = null;
 
 /* =========================================
    UTILITY FUNCTIONS
@@ -725,7 +809,11 @@ let reconnectTimer = null;
 function showToast(message) {
     toast.textContent = message;
     toast.classList.add("show");
-    window.setTimeout(() => toast.classList.remove("show"), 3000);
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(
+        () => toast.classList.remove("show"),
+        3200
+    );
 }
 
 function getTime() {
@@ -766,6 +854,68 @@ function updateInputHeight() {
     messageInput.style.height =
         Math.min(messageInput.scrollHeight, 130) + "px";
 }
+
+function joinText(a, b) {
+    const left = String(a || "").trim();
+    const right = String(b || "").trim();
+    return left && right ? left + " " + right : left || right;
+}
+
+/* =========================================
+   APP-LIKE VIEWPORT (keyboard + zoom handling)
+========================================= */
+
+let baseViewportHeight = window.innerHeight;
+
+function syncViewport() {
+    const vv = window.visualViewport;
+    const height = vv ? vv.height : window.innerHeight;
+    const top = vv ? vv.offsetTop : 0;
+
+    baseViewportHeight = Math.max(baseViewportHeight, height);
+
+    rootElement.style.setProperty("--app-height", height + "px");
+    rootElement.style.setProperty("--app-top", top + "px");
+
+    document.body.classList.toggle(
+        "keyboard-open",
+        height < baseViewportHeight - 120
+    );
+
+    // iOS sometimes scrolls the whole page when the keyboard opens
+    if (window.scrollX || window.scrollY) {
+        window.scrollTo(0, 0);
+    }
+
+    if (document.activeElement === messageInput) {
+        scrollToBottom();
+    }
+}
+
+if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", syncViewport);
+    window.visualViewport.addEventListener("scroll", syncViewport);
+}
+
+window.addEventListener("resize", syncViewport);
+
+window.addEventListener("orientationchange", function () {
+    window.setTimeout(function () {
+        baseViewportHeight = window.visualViewport
+            ? window.visualViewport.height
+            : window.innerHeight;
+        syncViewport();
+    }, 400);
+});
+
+syncViewport();
+
+messageInput.addEventListener("focus", function () {
+    window.setTimeout(function () {
+        syncViewport();
+        scrollToBottom();
+    }, 300);
+});
 
 /* =========================================
    CONNECTION STATUS
@@ -819,6 +969,16 @@ function addMessage(type, text) {
 ========================================= */
 
 function sendMessage() {
+    if (voiceMode) {
+        showToast("Finish or cancel the voice input first.");
+        return;
+    }
+
+    if (voiceBusy) {
+        showToast("Please wait, transcribing your voice...");
+        return;
+    }
+
     const message = messageInput.value.trim();
     if (!message) return;
 
@@ -1132,41 +1292,358 @@ function showDemoResponse(message) {
 }
 
 /* =========================================
-   MULTILINGUAL VOICE INPUT
+   VOICE INPUT
+   1) Primary: the phone's own speech engine (Google / Apple),
+      live text while you speak. Best for Malayalam, Hindi, Arabic.
+   2) Fallback: record audio and send it to the Worker (Whisper)
+      when the browser has no speech engine or it fails.
+   The text is never auto-sent: check it, then press Send.
 ========================================= */
 
-let mediaRecorder = null;
-let voiceStream = null;
-let voiceChunks = [];
-let voiceStopping = false;
-let maximumRecordingTimer = null;
-let voiceStartedAt = 0;
-let speechRecognition = null;
-let voiceOriginalInput = "";
-let voiceFinalTranscript = "";
-let voiceInterimTranscript = "";
-let voiceWasCancelled = false;
-
-
-const VOICE_SETTINGS = {
+const VOICE = {
     maximumRecordingMs: 60000,
+    minimumRecordingMs: 500,
     minimumAudioBytes: 4000,
-    minimumRecordingMs: 500
+    locales: {
+        en: "en-IN",
+        ml: "ml-IN",
+        hi: "hi-IN",
+        ar: "ar-AE"
+    }
 };
 
+const LANGUAGE_STORAGE_KEY = "rkai.voiceLanguage";
+
+let voiceMode = null;      // null | "speech" | "audio"
+let voiceBusy = false;     // true while the Worker is transcribing
+
+/* ---- language memory (defaults to English, not Auto) ---- */
+
+(function restoreVoiceLanguage() {
+    let saved = null;
+    try {
+        saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    } catch (error) { /* storage unavailable */ }
+
+    const allowed = Array.from(voiceLanguage.options).map(
+        (option) => option.value
+    );
+    voiceLanguage.value =
+        saved !== null && allowed.includes(saved) ? saved : "en";
+})();
+
+voiceLanguage.addEventListener("change", function () {
+    try {
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, voiceLanguage.value);
+    } catch (error) { /* storage unavailable */ }
+});
+
+function getRecognitionLanguage() {
+    return (
+        VOICE.locales[voiceLanguage.value] ||
+        navigator.language ||
+        "en-IN"
+    );
+}
+
+/* ---- shared UI helpers ---- */
+
+function setRecordingUI(mode) {
+    inputContainer.classList.add("is-recording");
+    micButton.classList.add("recording");
+    micButton.textContent = "⏹";
+    micButton.title = "Stop and keep text";
+    micButton.setAttribute("aria-label", "Stop voice input");
+    inputStatus.textContent =
+        mode === "speech"
+            ? "Listening... tap ⏹ to finish"
+            : "Recording... tap ⏹ to finish";
+}
+
+function resetVoiceUI() {
+    voiceMode = null;
+    inputContainer.classList.remove("is-recording");
+    micButton.classList.remove("recording");
+    micButton.textContent = "🎤";
+    micButton.title = "Start voice input";
+    micButton.setAttribute("aria-label", "Start voice input");
+    inputStatus.textContent = IDLE_STATUS;
+}
+
+function startVoice() {
+    if (voiceMode || voiceBusy) return;
+
+    const Recognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (Recognition) {
+        startSpeechRecognition(Recognition);
+    } else {
+        startAudioRecording();
+    }
+}
+
+function stopVoice() {
+    if (voiceMode === "speech") {
+        stopSpeechRecognition();
+    } else if (voiceMode === "audio") {
+        stopAudioRecording(false);
+    }
+}
+
+function cancelVoice() {
+    if (voiceMode === "speech") {
+        speechCancelled = true;
+        finishSpeech();
+    } else if (voiceMode === "audio") {
+        stopAudioRecording(true);
+    }
+}
+
 /* =========================================
-   AUDIO MIME / FILE EXTENSION
+   PRIMARY: BROWSER SPEECH RECOGNITION
 ========================================= */
 
-// IMPORTANT: Groq's Whisper endpoint accepts m4a, but NOT mp4.
-// iOS Safari produces AAC-in-MP4 blobs typed as "audio/mp4"; those
-// must be relabelled .m4a on the way out. Never silently fall back
-// to .webm — that is how an iOS blob ends up rejected by Groq.
+let recognition = null;
+let speechBase = "";
+let speechCommitted = "";
+let speechSession = "";
+let speechGotText = false;
+let speechStopRequested = false;
+let speechCancelled = false;
+let speechStartedAt = 0;
+let speechQuickEnds = 0;
+let speechMaxTimer = null;
+let speechStopTimer = null;
+
+function renderSpeechText(finals, interim) {
+    const spoken = joinText(
+        speechCommitted,
+        joinText(finals, interim)
+    );
+    messageInput.value = joinText(speechBase, spoken);
+    updateInputHeight();
+}
+
+function detachRecognition() {
+    if (!recognition) return;
+
+    recognition.onresult = null;
+    recognition.onerror = null;
+    recognition.onend = null;
+
+    try {
+        recognition.abort();
+    } catch (error) { /* already stopped */ }
+
+    recognition = null;
+}
+
+function startSpeechRecognition(Recognition) {
+    speechBase = messageInput.value.trim();
+    speechCommitted = "";
+    speechSession = "";
+    speechGotText = false;
+    speechStopRequested = false;
+    speechCancelled = false;
+    speechQuickEnds = 0;
+
+    try {
+        recognition = new Recognition();
+        recognition.lang = getRecognitionLanguage();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+
+        recognition.onresult = function (event) {
+            let finals = "";
+            let interim = "";
+
+            // Rebuild from the whole result list each time so text is
+            // never duplicated (a known problem on Android Chrome).
+            for (let i = 0; i < event.results.length; i++) {
+                const result = event.results[i];
+                const piece =
+                    result[0] && result[0].transcript
+                        ? result[0].transcript
+                        : "";
+
+                if (result.isFinal) {
+                    finals += piece;
+                } else {
+                    interim += piece;
+                }
+            }
+
+            if (finals || interim) speechGotText = true;
+
+            speechSession = finals;
+            renderSpeechText(finals, interim);
+        };
+
+        recognition.onerror = function (event) {
+            const reason = event && event.error;
+            console.warn("Speech recognition error:", reason);
+
+            if (reason === "no-speech" || reason === "aborted") {
+                return;
+            }
+
+            const engineProblem =
+                reason === "not-allowed" ||
+                reason === "service-not-allowed" ||
+                reason === "network" ||
+                reason === "language-not-supported" ||
+                reason === "audio-capture";
+
+            if (engineProblem && !speechGotText) {
+                // Nothing recognised yet: switch to audio recording
+                fallbackToAudio();
+                return;
+            }
+
+            if (engineProblem) {
+                showToast(
+                    "Speech service stopped. Check the text and try again."
+                );
+                speechStopRequested = true;
+            }
+        };
+
+        recognition.onend = function () {
+            if (voiceMode !== "speech") return;
+
+            speechCommitted = joinText(speechCommitted, speechSession);
+            speechSession = "";
+
+            if (speechStopRequested || speechCancelled) {
+                finishSpeech();
+                return;
+            }
+
+            // The engine stops itself after a pause. Restart it, but
+            // give up if it keeps ending immediately.
+            const lasted = Date.now() - speechStartedAt;
+            speechQuickEnds = lasted < 1000 ? speechQuickEnds + 1 : 0;
+
+            if (speechQuickEnds >= 3) {
+                showToast("Speech engine stopped. Check the text.");
+                finishSpeech();
+                return;
+            }
+
+            try {
+                speechStartedAt = Date.now();
+                recognition.start();
+            } catch (error) {
+                finishSpeech();
+            }
+        };
+
+        voiceMode = "speech";
+        speechStartedAt = Date.now();
+        recognition.start();
+
+        setRecordingUI("speech");
+
+        speechMaxTimer = window.setTimeout(function () {
+            if (voiceMode === "speech") {
+                showToast("Maximum recording time reached.");
+                stopSpeechRecognition();
+            }
+        }, VOICE.maximumRecordingMs);
+    } catch (error) {
+        console.warn("Could not start speech recognition:", error);
+        detachRecognition();
+        resetVoiceUI();
+        startAudioRecording();
+    }
+}
+
+function stopSpeechRecognition() {
+    if (voiceMode !== "speech") return;
+
+    speechStopRequested = true;
+    inputStatus.textContent = "Finishing...";
+
+    try {
+        recognition.stop();
+    } catch (error) {
+        finishSpeech();
+        return;
+    }
+
+    // Safety net in case the browser never fires "end"
+    speechStopTimer = window.setTimeout(finishSpeech, 2500);
+}
+
+function finishSpeech() {
+    if (voiceMode !== "speech") return;
+
+    if (speechMaxTimer) {
+        clearTimeout(speechMaxTimer);
+        speechMaxTimer = null;
+    }
+
+    if (speechStopTimer) {
+        clearTimeout(speechStopTimer);
+        speechStopTimer = null;
+    }
+
+    const combined = joinText(
+        speechBase,
+        joinText(speechCommitted, speechSession)
+    );
+
+    detachRecognition();
+    resetVoiceUI();
+
+    if (speechCancelled) {
+        messageInput.value = speechBase;
+        updateInputHeight();
+        showToast("Voice input cancelled.");
+        return;
+    }
+
+    messageInput.value = combined;
+    updateInputHeight();
+
+    if (speechGotText) {
+        showToast("Check the text, then press Send.");
+    } else {
+        showToast("No speech heard. Please try again.");
+    }
+}
+
+function fallbackToAudio() {
+    if (voiceMode !== "speech") return;
+
+    if (speechMaxTimer) {
+        clearTimeout(speechMaxTimer);
+        speechMaxTimer = null;
+    }
+
+    detachRecognition();
+    resetVoiceUI();
+    messageInput.value = speechBase;
+    updateInputHeight();
+
+    showToast("Using audio recording instead.");
+    startAudioRecording();
+}
+
+/* =========================================
+   FALLBACK: AUDIO RECORDING -> WORKER
+========================================= */
+
+// Groq Whisper accepts m4a but NOT mp4: relabel Safari's
+// audio/mp4 as .m4a on the way out.
 const MIME_TO_EXTENSION = {
     "audio/webm": "webm",
     "audio/mp4": "m4a",
     "audio/m4a": "m4a",
     "audio/x-m4a": "m4a",
+    "audio/aac": "m4a",
     "audio/mp3": "mp3",
     "audio/mpeg": "mp3",
     "audio/mpga": "mpga",
@@ -1185,345 +1662,18 @@ function getAudioFileExtension(mimeType) {
     return MIME_TO_EXTENSION[mime] || null;
 }
 
-/* =========================================
-   LIVE SPEECH-TO-TEXT PREVIEW
-========================================= */
+let mediaRecorder = null;
+let voiceStream = null;
+let voiceChunks = [];
+let audioBase = "";
+let audioCancelled = false;
+let audioStartedAt = 0;
+let audioMaxTimer = null;
 
-function getSpeechRecognitionLanguage() {
-    const selected = voiceLanguage.value;
-    const localeByLanguage = {
-        en: "en-US",
-        ml: "ml-IN",
-        ar: "ar-SA",
-        hi: "hi-IN"
-    };
-
-    return localeByLanguage[selected] ||
-        (navigator.language || "en-US");
-}
-
-function startLiveSpeechPreview() {
-    const Recognition =
-        window.SpeechRecognition ||
-        window.webkitSpeechRecognition;
-
-    if (!Recognition) {
-        inputStatus.textContent =
-            "Recording — live text preview is not supported in this browser";
-        return;
-    }
-
-    try {
-        speechRecognition = new Recognition();
-        speechRecognition.lang = getSpeechRecognitionLanguage();
-        speechRecognition.continuous = true;
-        speechRecognition.interimResults = true;
-        speechRecognition.maxAlternatives = 1;
-
-        speechRecognition.onresult = function (event) {
-            let interim = "";
-
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const result = event.results[i];
-                const phrase = result[0] && result[0].transcript
-                    ? result[0].transcript
-                    : "";
-
-                if (result.isFinal) {
-                    voiceFinalTranscript += phrase;
-                } else {
-                    interim += phrase;
-                }
-            }
-
-            voiceInterimTranscript = interim;
-            const liveText =
-                voiceOriginalInput +
-                (voiceOriginalInput && (voiceFinalTranscript || interim) ? " " : "") +
-                voiceFinalTranscript +
-                voiceInterimTranscript;
-
-            messageInput.value = liveText;
-            updateInputHeight();
-            messageInput.setSelectionRange(liveText.length, liveText.length);
-        };
-
-        speechRecognition.onerror = function (event) {
-            console.warn("Live speech recognition:", event.error);
-            if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-                inputStatus.textContent =
-                    "Recording — allow speech recognition permission to show live text";
-            }
-        };
-
-        speechRecognition.onend = function () {
-            // The media recording remains active until the user stops or cancels it.
-            if (mediaRecorder && mediaRecorder.state === "recording" && !voiceWasCancelled) {
-                inputStatus.textContent =
-                    "Recording — live preview paused; tap microphone to finish";
-            }
-        };
-
-        speechRecognition.start();
-    } catch (error) {
-        console.warn("Could not start live speech preview:", error);
-    }
-}
-
-function stopLiveSpeechPreview(cancelled) {
-    if (speechRecognition) {
-        try {
-            if (cancelled && typeof speechRecognition.abort === "function") {
-                speechRecognition.abort();
-            } else {
-                speechRecognition.stop();
-            }
-        } catch (error) {
-            console.warn("Could not stop speech recognition:", error);
-        }
-        speechRecognition = null;
-    }
-}
-
-function cancelVoiceRecording() {
-    if (!mediaRecorder || mediaRecorder.state !== "recording") return;
-
-    voiceWasCancelled = true;
-    stopLiveSpeechPreview(true);
-    stopVoiceRecording(false);
-    messageInput.value = voiceOriginalInput;
-    updateInputHeight();
-    cancelRecordingButton.classList.remove("visible");
-    showToast("Recording cancelled. Audio and recognized speech discarded.");
-}
-
-/* =========================================
-   START RECORDING
-========================================= */
-
-async function startVoiceRecording() {
-    if (
-        !navigator.mediaDevices ||
-        !navigator.mediaDevices.getUserMedia ||
-        !window.MediaRecorder
-    ) {
-        showToast(
-            "Audio recording is not supported. Use a modern browser over HTTPS."
-        );
-        return;
-    }
-
-    if (voiceStopping || mediaRecorder) return;
-    if (micButton.disabled) return;
-
-    try {
-        voiceStream =
-            await navigator.mediaDevices.getUserMedia({
-                audio: {
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: true
-                }
-            });
-
-        voiceChunks = [];
-        voiceStopping = false;
-        voiceStartedAt = Date.now();
-        voiceOriginalInput = messageInput.value;
-        voiceFinalTranscript = "";
-        voiceInterimTranscript = "";
-        voiceWasCancelled = false;
-
-        let mimeType = "";
-
-        // Prefer Opus/WebM on Chromium & Android; fall back to MP4
-        // on Safari/iOS. The Worker maps MP4 -> M4A on the wire.
-        if (
-            MediaRecorder.isTypeSupported(
-                "audio/webm;codecs=opus"
-            )
-        ) {
-            mimeType = "audio/webm;codecs=opus";
-        } else if (
-            MediaRecorder.isTypeSupported("audio/mp4")
-        ) {
-            mimeType = "audio/mp4";
-        } else if (
-            MediaRecorder.isTypeSupported(
-                "audio/ogg;codecs=opus"
-            )
-        ) {
-            mimeType = "audio/ogg;codecs=opus";
-        } else if (
-            MediaRecorder.isTypeSupported("audio/m4a")
-        ) {
-            mimeType = "audio/m4a";
-        }
-
-        mediaRecorder = mimeType
-            ? new MediaRecorder(voiceStream, {
-                  mimeType
-              })
-            : new MediaRecorder(voiceStream);
-
-        mediaRecorder.ondataavailable = function (event) {
-            if (event.data && event.data.size > 0) {
-                voiceChunks.push(event.data);
-            }
-        };
-
-        mediaRecorder.onerror = function (event) {
-            console.error(
-                "MediaRecorder error:",
-                event.error || event
-            );
-            showToast("Microphone recording failed.");
-            stopVoiceRecording(false);
-        };
-
-        mediaRecorder.onstop = async function () {
-            if (voiceWasCancelled) {
-                cleanupVoiceCapture();
-                return;
-            }
-
-            // Do NOT read mediaRecorder.mimeType here — cleanup has
-            // already run by the time this fires on some browsers.
-            // Capture the type before cleanup.
-            const recordedType =
-                mediaRecorder && mediaRecorder.mimeType
-                    ? mediaRecorder.mimeType
-                    : "";
-
-            const audioBlob = new Blob(voiceChunks, {
-                type: recordedType || "application/octet-stream"
-            });
-
-            const recordingDuration =
-                Date.now() - voiceStartedAt;
-
-            cleanupVoiceCapture();
-
-            if (
-                recordingDuration <
-                VOICE_SETTINGS.minimumRecordingMs
-            ) {
-                showToast(
-                    "Recording was too short. Please try again."
-                );
-                return;
-            }
-
-            if (
-                audioBlob.size <
-                VOICE_SETTINGS.minimumAudioBytes
-            ) {
-                showToast(
-                    "No clear audio was captured. Please try again."
-                );
-                return;
-            }
-
-            await transcribeAndSend(audioBlob);
-        };
-
-        mediaRecorder.start(250);
-        startLiveSpeechPreview();
-        cancelRecordingButton.classList.add("visible");
-
-        micButton.classList.add("recording");
-        micButton.title = "Stop voice recording";
-        micButton.setAttribute(
-            "aria-label",
-            "Stop voice recording"
-        );
-
-        inputStatus.textContent =
-            "Recording — speech appears here; tap microphone to finish or Cancel to discard";
-
-        showToast(
-            "Recording started. Tap the microphone again when finished."
-        );
-
-        maximumRecordingTimer = window.setTimeout(function () {
-            if (
-                mediaRecorder &&
-                mediaRecorder.state === "recording"
-            ) {
-                showToast("Maximum recording time reached.");
-                stopVoiceRecording(true);
-            }
-        }, VOICE_SETTINGS.maximumRecordingMs);
-    } catch (error) {
-        console.error(
-            "Could not start microphone:",
-            error
-        );
-        cleanupVoiceCapture();
-        showToast(
-            error && error.name === "NotAllowedError"
-                ? "Microphone permission was denied. Allow microphone access in your browser."
-                : "Unable to start microphone. Check browser permissions and try again."
-        );
-    }
-}
-
-/* =========================================
-   STOP RECORDING
-========================================= */
-
-function stopVoiceRecording(shouldTranscribe) {
-    if (!mediaRecorder) {
-        cleanupVoiceCapture();
-        return;
-    }
-
-    if (mediaRecorder.state === "inactive") {
-        cleanupVoiceCapture();
-        return;
-    }
-
-    voiceStopping = true;
-
-    if (shouldTranscribe) {
-        stopLiveSpeechPreview(false);
-    }
-
-    if (maximumRecordingTimer) {
-        clearTimeout(maximumRecordingTimer);
-        maximumRecordingTimer = null;
-    }
-
-    if (!shouldTranscribe) {
-        stopLiveSpeechPreview(true);
-        voiceChunks = [];
-        mediaRecorder.onstop = function () {
-            cleanupVoiceCapture();
-        };
-    }
-
-    try {
-        mediaRecorder.stop();
-        inputStatus.textContent = shouldTranscribe
-            ? "Preparing audio..."
-            : "Recording cancelled";
-    } catch (error) {
-        console.error(
-            "Could not stop voice recording:",
-            error
-        );
-        cleanupVoiceCapture();
-    }
-}
-
-/* =========================================
-   CLEANUP MICROPHONE RESOURCES
-========================================= */
-
-function cleanupVoiceCapture() {
-    if (maximumRecordingTimer) {
-        clearTimeout(maximumRecordingTimer);
-        maximumRecordingTimer = null;
+function releaseAudio() {
+    if (audioMaxTimer) {
+        clearTimeout(audioMaxTimer);
+        audioMaxTimer = null;
     }
 
     if (voiceStream) {
@@ -1533,77 +1683,195 @@ function cleanupVoiceCapture() {
 
     mediaRecorder = null;
     voiceChunks = [];
-    voiceStopping = false;
-    cancelRecordingButton.classList.remove("visible");
-
-    micButton.classList.remove("recording");
-    micButton.title = "Start voice recording";
-    micButton.setAttribute(
-        "aria-label",
-        "Start voice recording"
-    );
-
-    inputStatus.textContent =
-        "Text and multilingual voice supported";
 }
 
-/* =========================================
-   TRANSCRIBE AUDIO THROUGH CLOUDFLARE
-========================================= */
-
-async function transcribeAndSend(audioBlob) {
-    if (!CONFIG.transcriptionUrl) {
+async function startAudioRecording() {
+    if (
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia ||
+        !window.MediaRecorder
+    ) {
         showToast(
-            "Transcription URL is missing from CONFIG."
+            "Voice input is not supported here. Use the microphone on your keyboard instead."
         );
+        return;
+    }
+
+    if (voiceMode || voiceBusy) return;
+
+    voiceMode = "audio";
+    audioBase = messageInput.value.trim();
+    audioCancelled = false;
+    voiceChunks = [];
+
+    try {
+        // Noise suppression / echo cancelling distort speech for the
+        // recogniser, so they are off. Mono 16 kHz is what Whisper uses.
+        voiceStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                channelCount: 1,
+                sampleRate: 16000,
+                echoCancellation: false,
+                noiseSuppression: false,
+                autoGainControl: true
+            }
+        });
+
+        // The user may have cancelled while the permission prompt was open
+        if (voiceMode !== "audio") {
+            releaseAudio();
+            return;
+        }
+
+        let mimeType = "";
+        const candidates = [
+            "audio/webm;codecs=opus",
+            "audio/mp4",
+            "audio/ogg;codecs=opus",
+            "audio/m4a"
+        ];
+
+        for (const candidate of candidates) {
+            if (MediaRecorder.isTypeSupported(candidate)) {
+                mimeType = candidate;
+                break;
+            }
+        }
+
+        const recorderOptions = { audioBitsPerSecond: 128000 };
+        if (mimeType) recorderOptions.mimeType = mimeType;
+
+        const recorder = new MediaRecorder(voiceStream, recorderOptions);
+        mediaRecorder = recorder;
+
+        recorder.ondataavailable = function (event) {
+            if (event.data && event.data.size > 0) {
+                voiceChunks.push(event.data);
+            }
+        };
+
+        recorder.onerror = function (event) {
+            console.error("MediaRecorder error:", event.error || event);
+            audioCancelled = true;
+            showToast("Microphone recording failed.");
+            try {
+                if (recorder.state !== "inactive") recorder.stop();
+            } catch (error) {
+                releaseAudio();
+                resetVoiceUI();
+            }
+        };
+
+        recorder.onstop = async function () {
+            // Capture everything BEFORE cleanup clears it
+            const recordedType = recorder.mimeType || mimeType || "";
+            const chunks = voiceChunks.slice();
+            const cancelled = audioCancelled;
+            const duration = Date.now() - audioStartedAt;
+            const base = audioBase;
+
+            releaseAudio();
+            resetVoiceUI();
+
+            if (cancelled) return;
+
+            if (duration < VOICE.minimumRecordingMs) {
+                showToast("Recording was too short. Please try again.");
+                return;
+            }
+
+            const blob = new Blob(chunks, {
+                type: recordedType || "application/octet-stream"
+            });
+
+            if (blob.size < VOICE.minimumAudioBytes) {
+                showToast("No clear audio was captured. Please try again.");
+                return;
+            }
+
+            await transcribeAudio(blob, recordedType, base);
+        };
+
+        audioStartedAt = Date.now();
+        // No timeslice: one complete file, most reliable on iOS Safari
+        recorder.start();
+
+        setRecordingUI("audio");
+
+        audioMaxTimer = window.setTimeout(function () {
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                showToast("Maximum recording time reached.");
+                stopAudioRecording(false);
+            }
+        }, VOICE.maximumRecordingMs);
+    } catch (error) {
+        console.error("Could not start microphone:", error);
+        releaseAudio();
+        resetVoiceUI();
+        showToast(
+            error && error.name === "NotAllowedError"
+                ? "Microphone permission was denied. Allow microphone access in your browser settings."
+                : "Unable to start the microphone. Check permissions and try again."
+        );
+    }
+}
+
+function stopAudioRecording(cancelled) {
+    audioCancelled = Boolean(cancelled);
+
+    if (!mediaRecorder) {
+        releaseAudio();
+        resetVoiceUI();
+        return;
+    }
+
+    if (mediaRecorder.state === "inactive") {
+        releaseAudio();
+        resetVoiceUI();
+        return;
+    }
+
+    inputStatus.textContent = cancelled
+        ? "Cancelling..."
+        : "Preparing audio...";
+
+    try {
+        mediaRecorder.stop();
+    } catch (error) {
+        console.error("Could not stop recording:", error);
+        releaseAudio();
+        resetVoiceUI();
+    }
+
+    if (cancelled) {
+        showToast("Voice input cancelled.");
+    }
+}
+
+async function transcribeAudio(audioBlob, recordedType, baseText) {
+    if (!CONFIG.transcriptionUrl) {
+        showToast("Transcription URL is missing from CONFIG.");
         return;
     }
 
     if (!hasConfiguredToken()) {
-        showToast(
-            "Configure your mobile token before using voice input."
-        );
+        showToast("Configure your mobile token before using voice input.");
         return;
     }
 
-    if (!audioBlob || audioBlob.size === 0) {
-        showToast("No audio data was recorded.");
-        return;
-    }
-
-    // Resolve the extension we will send to the Worker. If the blob
-    // type is missing (iOS Safari), use the container the recorder
-    // actually produced, not a blind "webm" default.
-    let extension = getAudioFileExtension(audioBlob.type);
+    let extension =
+        getAudioFileExtension(audioBlob.type) ||
+        getAudioFileExtension(recordedType);
 
     if (!extension) {
-        // If the blob is empty-typed (Safari), infer from the
-        // underlying MediaRecorder mimetype captured at stop time.
-        if (
-            mediaRecorder &&
-            mediaRecorder.mimeType
-        ) {
-            extension = getAudioFileExtension(
-                mediaRecorder.mimeType
-            );
-        }
+        extension = /mp4|m4a|aac/i.test(recordedType) ? "m4a" : "webm";
+        console.warn("Unknown audio type, using", extension, recordedType);
     }
 
-    if (!extension) {
-        // Absolute last resort — let the Worker sniff the bytes
-        // and return a proper 415 with a readable error.
-        extension = "webm";
-        console.warn(
-            "Unknown blob type, defaulting to .webm:",
-            audioBlob.type
-        );
-    }
-
-    inputStatus.textContent =
-        "Detecting language and transcribing...";
-
+    voiceBusy = true;
     micButton.disabled = true;
     voiceLanguage.disabled = true;
+    inputStatus.textContent = "Transcribing...";
 
     try {
         const formData = new FormData();
@@ -1613,137 +1881,107 @@ async function transcribeAndSend(audioBlob) {
             formData.append("language", selectedLanguage);
         }
 
-        // Cloudflare Worker expects multipart field "file".
-        formData.append(
-            "file",
-            audioBlob,
-            "voice." + extension
-        );
+        // Worker expects the multipart field "file"
+        formData.append("file", audioBlob, "voice." + extension);
 
-        const response = await fetch(
-            CONFIG.transcriptionUrl,
-            {
-                method: "POST",
-                headers: {
-                    "X-Mobile-Token": CONFIG.mobileToken
-                },
-                body: formData
-            }
-        );
+        const response = await fetch(CONFIG.transcriptionUrl, {
+            method: "POST",
+            headers: {
+                "X-Mobile-Token": CONFIG.mobileToken
+            },
+            body: formData
+        });
 
-        const result = await response
-            .json()
-            .catch(() => ({}));
+        const result = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            // Prefer the provider's detailed message if the Worker
-            // forwarded it, then fall back to the generic error.
             const detail =
                 (result && result.details) ||
                 (result && result.error) ||
-                result?.message;
+                (result && result.message);
 
             throw new Error(
                 detail ||
-                    "Transcription service returned HTTP " +
-                        response.status
+                    "Transcription service returned HTTP " + response.status
             );
         }
 
         if (!result.success) {
             throw new Error(
-                result.error ||
-                    "Transcription was unsuccessful."
+                result.error || "Transcription was unsuccessful."
             );
         }
 
-        const transcript =
-            String(result.text || "").trim();
+        const transcript = String(result.text || "").trim();
 
         if (!transcript) {
-            throw new Error(
-                "No speech could be recognized. Please try again."
-            );
+            throw new Error("No speech could be recognized. Please try again.");
         }
-
-        messageInput.value = transcript;
-        updateInputHeight();
 
         if (result.language) {
-            console.info(
-                "Detected speech language:",
-                result.language
-            );
+            console.info("Detected speech language:", result.language);
         }
 
-        // If the WebSocket is offline, keep the transcript in the
-        // box so the user can send it manually once reconnected.
-        if (
-            !socket ||
-            socket.readyState !== WebSocket.OPEN ||
-            !isAuthenticated ||
-            !officeOnline
-        ) {
-            showToast(
-                "Transcript ready — connection is offline. Send when reconnected."
-            );
-            return;
-        }
-
-        sendMessage();
+        // Put the text in the box for review. Never auto-send.
+        messageInput.value = joinText(baseText, transcript);
+        updateInputHeight();
+        showToast("Check the text, then press Send.");
     } catch (error) {
-        console.error(
-            "Voice transcription failed:",
-            error
-        );
+        console.error("Voice transcription failed:", error);
         showToast(
-            error.message ||
-                "Voice transcription failed. Please try again."
+            error.message || "Voice transcription failed. Please try again."
         );
     } finally {
+        voiceBusy = false;
         micButton.disabled = false;
         voiceLanguage.disabled = false;
-        inputStatus.textContent =
-            "Text and multilingual voice supported";
+        inputStatus.textContent = IDLE_STATUS;
     }
 }
 
 /* =========================================
-   MICROPHONE BUTTON
+   VOICE BUTTONS
 ========================================= */
 
 micButton.addEventListener("click", function () {
-    if (
-        mediaRecorder &&
-        mediaRecorder.state === "recording"
-    ) {
-        stopVoiceRecording(true);
-    } else if (!mediaRecorder) {
-        startVoiceRecording();
+    if (voiceBusy) return;
+
+    if (voiceMode) {
+        stopVoice();
+    } else {
+        startVoice();
     }
 });
 
-cancelRecordingButton.addEventListener("click", cancelVoiceRecording);
+cancelRecordingButton.addEventListener("click", cancelVoice);
 
 /* =========================================
    BUTTON EVENTS
 ========================================= */
 
-sendButton.addEventListener("click", sendMessage);
+// Keep the keyboard open when tapping Send or the mic
+[sendButton, micButton].forEach(function (button) {
+    button.addEventListener("mousedown", function (event) {
+        event.preventDefault();
+    });
+});
 
-messageInput.addEventListener(
-    "keydown",
-    function (event) {
-        if (
-            event.key === "Enter" &&
-            !event.shiftKey &&
-            !event.isComposing
-        ) {
-            event.preventDefault();
-            sendMessage();
-        }
+sendButton.addEventListener("click", function () {
+    const keepKeyboard = document.activeElement === messageInput;
+    sendMessage();
+    if (keepKeyboard) messageInput.focus({ preventScroll: true });
+});
+
+messageInput.addEventListener("keydown", function (event) {
+    if (
+        event.key === "Enter" &&
+        !event.shiftKey &&
+        !event.isComposing
+    ) {
+        event.preventDefault();
+        sendMessage();
     }
-);
+});
 
 messageInput.addEventListener("input", updateInputHeight);
 
@@ -1751,38 +1989,40 @@ messageInput.addEventListener("input", updateInputHeight);
    SUGGESTION BUTTONS
 ========================================= */
 
-document
-    .querySelectorAll(".suggestion")
-    .forEach((button) => {
-        button.addEventListener("click", function () {
-            messageInput.value = this.dataset.message || "";
-            updateInputHeight();
-            sendMessage();
-        });
+document.querySelectorAll(".suggestion").forEach((button) => {
+    button.addEventListener("click", function () {
+        if (voiceMode || voiceBusy) {
+            showToast("Finish the voice input first.");
+            return;
+        }
+        messageInput.value = this.dataset.message || "";
+        updateInputHeight();
+        sendMessage();
     });
+});
 
 /* =========================================
    CLEAR CHAT
 ========================================= */
 
-document
-    .getElementById("clearButton")
-    .addEventListener("click", function () {
-        if (!confirm("Clear this conversation?")) return;
-        messages.replaceChildren();
-        welcome.style.display = "block";
-        typingIndicator.hidden = true;
-        pendingRequests.clear();
-        messageInput.value = "";
-        messageInput.style.height = "auto";
-        showToast("Conversation cleared");
-    });
+document.getElementById("clearButton").addEventListener("click", function () {
+    if (!confirm("Clear this conversation?")) return;
+    messages.replaceChildren();
+    welcome.style.display = "block";
+    typingIndicator.hidden = true;
+    pendingRequests.clear();
+    messageInput.value = "";
+    messageInput.style.height = "auto";
+    showToast("Conversation cleared");
+});
 
 /* =========================================
    PAGE INITIALIZATION
 ========================================= */
 
 function initializeApp() {
+    syncViewport();
+
     if (CONFIG.demoMode) {
         setConnectionStatus(false, "Local preview mode");
         return;
@@ -1797,20 +2037,25 @@ if (document.readyState === "loading") {
 }
 
 /* =========================================
-   CLEANUP WHEN PAGE IS CLOSED
+   CLEANUP WHEN PAGE IS HIDDEN OR CLOSED
 ========================================= */
 
-window.addEventListener("pagehide", function () {
-    if (
-        mediaRecorder &&
-        mediaRecorder.state === "recording"
-    ) {
-        stopVoiceRecording(false);
+function abandonVoice() {
+    if (voiceMode === "speech") {
+        speechCancelled = true;
+        finishSpeech();
+    } else if (voiceMode === "audio") {
+        stopAudioRecording(true);
     }
+}
 
-    if (voiceStream) {
-        voiceStream.getTracks().forEach((track) => track.stop());
-    }
+document.addEventListener("visibilitychange", function () {
+    if (document.hidden) abandonVoice();
+});
+
+window.addEventListener("pagehide", function () {
+    abandonVoice();
+    releaseAudio();
 
     if (socket && socket.readyState === WebSocket.OPEN) {
         socket.close();
@@ -1818,43 +2063,28 @@ window.addEventListener("pagehide", function () {
 });
 
 /* =========================================
-   PREVENT MOBILE PAGE ZOOM
+   PREVENT PAGE ZOOM (pinch and double-tap)
+   Double-tap zoom is stopped by CSS touch-action and the
+   viewport tag. The old "touchend" blocker is removed because it
+   also swallowed legitimate taps on the input box.
 ========================================= */
 
-document.addEventListener(
-    "gesturestart",
-    function (event) {
-        event.preventDefault();
-    },
-    { passive: false }
-);
+["gesturestart", "gesturechange", "gestureend"].forEach(function (name) {
+    document.addEventListener(
+        name,
+        function (event) {
+            event.preventDefault();
+        },
+        { passive: false }
+    );
+});
 
 document.addEventListener(
-    "gesturechange",
+    "touchmove",
     function (event) {
-        event.preventDefault();
-    },
-    { passive: false }
-);
-
-document.addEventListener(
-    "gestureend",
-    function (event) {
-        event.preventDefault();
-    },
-    { passive: false }
-);
-
-let lastTouchEnd = 0;
-
-document.addEventListener(
-    "touchend",
-    function (event) {
-        const now = Date.now();
-        if (now - lastTouchEnd <= 300) {
+        if (event.touches && event.touches.length > 1) {
             event.preventDefault();
         }
-        lastTouchEnd = now;
     },
     { passive: false }
 );
